@@ -15,7 +15,7 @@
         // Scene
         const scene = new THREE.Scene();
         const url = '../../static/assets/background.png';
-        scene.background = new THREE.TextureLoader().load(url);
+        // scene.background = new THREE.TextureLoader().load(url);
 
     });
 </script>
