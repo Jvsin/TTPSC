@@ -1,32 +1,12 @@
 <script>
     import "../styles/global.css";
-    import Navigator from "../lib/Navigator.svelte";
     import Canvas from "../lib/Canvas.svelte";
-
-    const mouseOver = (e) => {
-        const target = e.target;
-        target.style.transition = '300ms ease-in-out';
-        target.style.background = 'linear-gradient(rgb(255, 255 ,255), rgba(255, 255 ,255)) no-repeat 0px 0px';
-        target.style.color = "rgb(0, 0, 0)";
-    }
-
-    const mouseOut = (e) => {
-        const target = e.target
-        target.style.background = 'linear-gradient(rgb(255, 255 ,255), rgba(255, 255 ,255)) no-repeat 0px 50px';
-        target.style.color = "rgb(255, 255, 255)";
-
-        window.setTimeout(() => {
-            target.style.transition = 'none';
-            target.style.background = 'linear-gradient(rgb(255, 255 ,255), rgba(255, 255 ,255)) no-repeat 0px -50px';
-        }, 300);
-    };
 </script>
 
-<Navigator />
 <div class="container">
     <div class="form-box">
         <form action="">
-            <h1 class="form-iten">Logowanie</h1>
+            <h1 class="form-iten">User Registration</h1>
 
             <div class="form-item input-email">
                 <label for="email">Email</label><br>
@@ -37,8 +17,7 @@
                 <input type="password" name="">
             </div>
             <div class="form-item buttons">
-                <button on:mouseover={mouseOver} on:mouseout={mouseOut} type="submit" class="form-item sign-up" name="sign-up">Sign Up</button>
-                <button on:mouseover={mouseOver} on:mouseout={mouseOut} type="submit" class="form-item sign-in" name="sign-in">Sign In</button>
+                <button type="submit" class="form-item sign-up" name="sign-up">Register</button>
             </div>
 
             <div class="pikabu">
@@ -55,9 +34,7 @@
             Sed vel posuere nibh, sed tincidunt dui. Proin ante dui, bibendum ac elementum sed, convallis non tellus. Mauris eros mauris, 
             sollicitudin et libero sit amet, lobortis mollis enim.
         </p>
-        <a href="#">
-            Saul Goodman
-        </a>
+        <a href="./content">Connect Wallet</a>
     </div>
 </div>
 <Canvas />
@@ -68,7 +45,6 @@
         height: 40px;
         outline: none;
         background: transparent;
-        font-family: 'Lato', sans-serif;
         border: 1px solid rgb(255, 255, 255);
         text-align: center;
         font-size: 18px;
@@ -77,20 +53,6 @@
         letter-spacing: 1.5px;
         color: rgb(255, 255, 255);
         margin: 5px 0;
-    }
-
-    button {
-        width: 150px;
-        height: 50px;
-        outline: none;
-        background: linear-gradient(rgb(255, 255 ,255), rgba(255, 255 ,255)) no-repeat 0px -50px;
-        border: 1px solid rgb(255, 255, 255);
-        border-radius: 25px;
-        color: rgb(255, 255, 255);
-        font-family: 'Lato', sans-serif;
-        margin: 0 20px 0 0;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
     }
 
     a {
@@ -120,7 +82,7 @@
         display: flex;
         justify-content: space-around;
         align-items: center;
-        flex-flow: row wrap;
+        flex-flow: row-reverse wrap;
     }
 
     .container .form-box {
@@ -178,8 +140,12 @@
             width: calc(100vw - 35px);
         }
 
-        .container .text-box {
-            display: none;
+        .text-box h1 {
+            font-size: 8vw;
+        }
+
+        .text-box p {
+            font-size: 13px;
         }
     }
 

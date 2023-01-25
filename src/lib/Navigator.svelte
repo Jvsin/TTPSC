@@ -23,11 +23,4 @@
             font-size: 5vw;
         }
     }
-
-    @media only screen and (max-width: 800px) {
-        nav {
-            position: absolute;
-            z-index: 1;
-        }
-    }
 </style>

@@ -13,6 +13,7 @@ html, body {
 
 body {
     background: rgb(20, 22, 26);
+    font-family: 'Lato', sans-serif;
 }
 
 body::-webkit-scrollbar {
@@ -28,4 +29,22 @@ body::-webkit-scrollbar-thumb {
     background-color: rgb(234, 32, 39);
     outline: none;
     border-radius: 50px;
+}
+
+button {
+    width: 150px;
+    height: 50px;
+    outline: none;
+    background: linear-gradient(rgb(255, 255 ,255), rgba(255, 255 ,255)) no-repeat 0px -50px;
+    transition: .3s ease-in-out;
+    border: 1px solid rgb(255, 255, 255);
+    border-radius: 25px;
+    color: rgb(255, 255, 255);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:hover {
+    background: linear-gradient(rgb(255, 255 ,255), rgba(255, 255 ,255)) no-repeat 0px 0px;
+    color: rgb(0, 0, 0);
 }
