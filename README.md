@@ -11,8 +11,8 @@ module.exports = 'place for your private key';
 Na początku trzeba sklonować repozytorium:
 
 ```sh
-git clone https://github.com/Przemek-Dudek/Projekt_Innowacja_2022
-cd Projekt_Innowacja_2022
+git clone https://github.com/Lecrut/TTpsc_t2.git
+cd TTpsc_t2
 npm install
 ```
 
@@ -27,5 +27,5 @@ Na końcu uruchamiamy część frontendową:
 ```sh
 cd frontend
 npm install
-npm start
+npm run dev
 ```
