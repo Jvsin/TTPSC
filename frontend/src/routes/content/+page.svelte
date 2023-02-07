@@ -40,11 +40,11 @@
         width: 90vw;
         height: 600px;
         border-radius: 30px;
-        transition: .3s ease-in-out;
         margin: 25px 0 0 0;
         background: #2f3640;
         display: flex;
         justify-content: start;
         align-items: flex-start;
+        margin-bottom: 30px;
     }
 </style>
