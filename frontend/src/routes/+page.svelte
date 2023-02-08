@@ -3,23 +3,14 @@
     import { ethers } from "ethers";
     import Canvas from "../lib/Canvas.svelte";
 
-    /*Importing compiles files (artifacts and addresses)
-    import Token_testArtifact from "../contracts/Token_test.json";
-    import tokenAddress from "../contracts/token-address.json";
-    import NotificationArtifact from "../contracts/Notifications.json";
-    import notificationAddress from "../contracts/notification-address.json";
-    import WorkersArtifact from "../contracts/AccountTypes.json";
-    import workersAddress from "../contracts/workers-address.json";
-    import MarketplaceArtifact from "../contracts/marketplace.json";
-    import marketplaceAddress from "../contracts/marketplace-address.json";*/
+    // Importing compiled files (artifacts and addresses)
     import KontraktArtifact from "../contracts/Main.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
 
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        // _workers: undefined,
-        // _token: undefined,
+        accountsArray: undefined,
         _kontrakt: undefined,
         _provider: undefined
     }
@@ -41,8 +32,8 @@
             console.log("ni mosz metomoska, trzo zoinstolowoć");
         } else {
             initialState.selectedAddress = await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-            if (initialState.selectedAddress) {
+            
+            if (initialState._provider.connection) {
                 console.log("connection: ", true);
             } else {
                 console.log("connection: ", false);
@@ -53,7 +44,7 @@
     // Loading the marketplace if user has connected their wallet
     async function loadMarketplace() {
         try {
-            if (!initialState.selectedAddress) {
+            if (!initialState._provider.connection) {
                 throw { message: "Please connect your wallet to MetaMask" }
             }
 
@@ -66,18 +57,6 @@
     // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
     async function initializeEthers() {
         initialState._provider = new ethers.providers.Web3Provider(window.ethereum);
-
-        /*initialState._token = new ethers.Contract(
-            tokenAddress.Token,
-            Token_testArtifact.abi,
-            initialState._provider.getSigner(0)
-        );
-
-        initialState._workers = new ethers.Contract(
-            workersAddress.Workers,
-            WorkersArtifact.abi,
-            initialState._provider.getSigner(0)
-        )*/
 
         initialState._kontrakt = new ethers.Contract(
             kontraktAddress.Kontrakt,
@@ -115,26 +94,16 @@
             console.error(err.message, err.address, err.name, err.surname, err.email, err.role);
         } finally {
             _GetAllUsers();
+            if (initialState.accountsArray) {
+                console.log(initialState.accountsArray);
+            }
         }
-        
-        /*if (!address || !name || !surname || !email || !role) {
-            formValidation.statusMessage = "failed";
-            console.log('Incomplete form: ', address, name, surname, email, Number(role));
-        } else {
-            await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
-            formValidation.statusMessage ="succeed";
-            formValidation.address = '';
-            formValidation.name = '';
-            formValidation.surname = '';
-            formValidation.email = '';
-            formValidation.role = '';
-        }
-        initialState._workers.addUser(address, name, surname, email, rank, {gasLimit: 540000});*/
     }
 
+    // retrieving all registered users if the stack isn't empty it stores the array in initialState
     async function _GetAllUsers() {
         await initialState._kontrakt.GetAllUsers().then((result) => {
-            console.log(result)
+            initialState.accountsArray = result;
         }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
         });

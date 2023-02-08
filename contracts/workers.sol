@@ -24,23 +24,10 @@ contract AccountTypes {
         role Rank; 
     }
 
-    //user_t head_owner;
-    // lista pracownikow 
     user_t[] public workers;
-    //address[] public addressList; -> nie uzyte ani razu wiec wywalam
 
     constructor () {}
-    /*
-    constructor(string memory name, string memory surname, string memory email){ 
-        owner = msg.sender;
-        head_owner.ID = 0;
-        head_owner.Name = name;
-        head_owner.Surname = surname;
-        head_owner.Email = email;
-        head_owner.Rank = role.OWNER;
-        head_owner.user = owner;
-    }*/
-
+  
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
@@ -79,12 +66,6 @@ contract AccountTypes {
         workers.push(new_worker);
     }
 
-    /*
-    function GetMainAccount () external view returns (address) {
-        return head_owner.user;
-    }
-    */
-
     // zmiana roli pracownika 
     function change_role(uint256 _id, role new_role) external returns(bool) {
         require( _id >= 0 , "ID is negative");
@@ -100,5 +81,5 @@ contract AccountTypes {
             temp[i] = workers[i];
         }
         return temp;
-    }
+    } 
 }
