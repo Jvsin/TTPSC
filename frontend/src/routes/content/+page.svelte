@@ -1,12 +1,48 @@
 <script>
+    import { onMount } from 'svelte';
+    import { ethers } from "ethers";
+
+    import KontraktArtifact from "../../contracts/Main.json";
+    import kontraktAddress from "../../contracts/kontrakt-address.json";
+
+    // This object stores information regarding the blockchain
+    export const initialState = {
+        selectedAddress: undefined,
+        _kontrakt: undefined,
+        _provider: undefined
+    }
+
+    // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
+    async function initializeEthers() {
+        initialState._provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        initialState._kontrakt = new ethers.Contract(
+            kontraktAddress.Kontrakt,
+            KontraktArtifact.abi,
+            initialState._provider.getSigner(0)
+        );
+    }
+
+    async function _GetAllUsers() {
+        await initialState._kontrakt.GetAllUsers().then((result) => {
+            console.log(result)
+        }).catch((err) => {
+            console.log("code: ", err.code, "\nmessage: ", err.message);
+        });
+    }
+
+    onMount(() => {
+        initializeEthers();
+        _GetAllUsers();
+    })
 
 </script>
 
 <div class="container">
     <div class="container-menu">
-        <button class="menu-take">Take</button>
-        <button class="menu-modify">Modify</button>
-        <button class="menu-give">Give</button>
+        <button class="menu-take btn">Take</button>
+        <button class="menu-modify btn">Modify</button>
+        <button class="menu-give btn">Give</button>
     </div>
     <div class="container-content">
         

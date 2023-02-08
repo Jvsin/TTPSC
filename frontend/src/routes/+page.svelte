@@ -1,10 +1,9 @@
 <script>
-    import "../styles/global.css";
     import { onMount } from 'svelte';
     import { ethers } from "ethers";
     import Canvas from "../lib/Canvas.svelte";
 
-    // Importing compiles files (artifacts and addresses)
+    /*Importing compiles files (artifacts and addresses)
     import Token_testArtifact from "../contracts/Token_test.json";
     import tokenAddress from "../contracts/token-address.json";
     import NotificationArtifact from "../contracts/Notifications.json";
@@ -12,20 +11,20 @@
     import WorkersArtifact from "../contracts/AccountTypes.json";
     import workersAddress from "../contracts/workers-address.json";
     import MarketplaceArtifact from "../contracts/marketplace.json";
-    import marketplaceAddress from "../contracts/marketplace-address.json";
+    import marketplaceAddress from "../contracts/marketplace-address.json";*/
     import KontraktArtifact from "../contracts/Main.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
 
-    const HARDHAT_NETWORK_ID = "80001";
-    const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
-
+    // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        _workers: undefined,
-        _token: undefined,
+        // _workers: undefined,
+        // _token: undefined,
+        _kontrakt: undefined,
         _provider: undefined
     }
 
+    // This objects stores form information
     export const formValidation = {
         address: undefined,
         name: undefined,
@@ -45,17 +44,30 @@
 
             if (initialState.selectedAddress) {
                 console.log("connection: ", true);
-                window.location.assign("./content");
             } else {
                 console.log("connection: ", false);
             }
         }
     }
 
+    // Loading the marketplace if user has connected their wallet
+    async function loadMarketplace() {
+        try {
+            if (!initialState.selectedAddress) {
+                throw { message: "Please connect your wallet to MetaMask" }
+            }
+
+            window.location.assign("./content");
+        } catch(err) {
+            console.error(err.message);
+        }
+    }
+
+    // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
     async function initializeEthers() {
         initialState._provider = new ethers.providers.Web3Provider(window.ethereum);
 
-        initialState._token = new ethers.Contract(
+        /*initialState._token = new ethers.Contract(
             tokenAddress.Token,
             Token_testArtifact.abi,
             initialState._provider.getSigner(0)
@@ -65,25 +77,63 @@
             workersAddress.Workers,
             WorkersArtifact.abi,
             initialState._provider.getSigner(0)
-        )
+        )*/
+
+        initialState._kontrakt = new ethers.Contract(
+            kontraktAddress.Kontrakt,
+            KontraktArtifact.abi,
+            initialState._provider.getSigner(0)
+        );
     }
 
+    // Function that registers users
     async function _addUser(e) {
         e.preventDefault();
         let {address, name, surname, email, role} = formValidation;
-        if (!address || !name || !surname || !email || !role) {
+
+        try {
+            if (!address || !name || !surname || !email || !role) {
+                formValidation.statusMessage = "failed";
+                throw {
+                    address: address,
+                    name: name,
+                    surname: surname,
+                    email: email,
+                    role: role,
+                    message: "Incomplete form"
+                }
+            } else {
+                await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
+                formValidation.statusMessage ="succeed";
+                formValidation.address = '';
+                formValidation.name = '';
+                formValidation.surname = '';
+                formValidation.email = '';
+                formValidation.role = '';
+            }
+        } catch(err) {
+            console.error(err.message, err.address, err.name, err.surname, err.email, err.role);
+        } finally {
+            _GetAllUsers();
+        }
+        
+        /*if (!address || !name || !surname || !email || !role) {
             formValidation.statusMessage = "failed";
             console.log('Incomplete form: ', address, name, surname, email, Number(role));
         } else {
-            await initialState._workers.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
+            await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
             formValidation.statusMessage ="succeed";
+            formValidation.address = '';
+            formValidation.name = '';
+            formValidation.surname = '';
+            formValidation.email = '';
+            formValidation.role = '';
         }
-        // initialState._workers.addUser(address, name, surname, email, rank, {gasLimit: 540000});
-        _GetAllUsers();
+        initialState._workers.addUser(address, name, surname, email, rank, {gasLimit: 540000});*/
     }
 
     async function _GetAllUsers() {
-        await initialState._workers.GetAllUsers().then((result) => {
+        await initialState._kontrakt.GetAllUsers().then((result) => {
             console.log(result)
         }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
@@ -127,7 +177,7 @@
                 </select>
             </div>
             <div class="form-item buttons">
-                <button on:click={_addUser} type="button" class="form-item sign-up" name="sign-up">Register</button>
+                <button on:click={_addUser} type="button" class="form-item btn" name="sign-up">Register</button>
             </div>
             <div class="form-item">
                 <p>{formValidation.statusMessage}</p>
@@ -147,16 +197,16 @@
             Sed vel posuere nibh, sed tincidunt dui. Proin ante dui, bibendum ac elementum sed, convallis non tellus. Mauris eros mauris, 
             sollicitudin et libero sit amet, lobortis mollis enim.
         </p>
-        <a href="./content" on:click={walletConnection}>Connect Wallet</a>
+        <div class="red-buttons">
+            <button class="red-btn" on:click={walletConnection}>Connect Wallet</button>
+            <button class="red-btn" on:click={loadMarketplace}>Marketplace</button>
+        </div>
     </div>
 </div>
 <Canvas />
 
 <style>
-    input[type=text], input[type=email], select {
-        -moz-appearance:none;
-        -webkit-appearance:none;
-        appearance:unset;
+    input[type=text], input[type=email] {
         width: 300px;
         height: 40px;
         outline: none;
@@ -172,22 +222,40 @@
         margin: 5px 0;
     }
 
-    a {
-        display: block;
+    select {
+        -moz-appearance:none;
+        -webkit-appearance:none;
+        appearance:unset;
+        width: 300px;
+        height: 40px;
+        outline: none;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 5px 0;
+    }
+
+    button.red-btn {
+        outline: none;
         color: rgb(0, 0, 0);
-        text-decoration: none;
-        width: 250px;
+        margin: 10px;
+        letter-spacing: 2px;
+        font-weight: 500;
+        width: 200px;
         height: 60px;
         display: flex;
         justify-content: center;
         align-items: center;
         background: rgb(234, 32, 39);
         border-radius: 30px;
+        border: none;
         transition: 300ms ease-in-out;
         -webkit-tap-highlight-color: transparent;
+        cursor: pointer;
     }
 
-    a:hover {
+    button.red-btn:hover {
         background: rgb(194, 54, 22);
     }
 
@@ -231,7 +299,7 @@
     .container .text-box {
         width: 700px;
         height: 600px;
-        text-align: center;
+        text-align: justify;
         color: rgb(255, 255, 255);
         letter-spacing: 4px;
         display: flex;
@@ -241,7 +309,14 @@
     }
 
     .text-box * {
-        margin: 40px 0;
+        margin: 30px 0;
+    }
+
+    .text-box .red-buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: row wrap;
     }
 
     .text-box h1 {
@@ -267,7 +342,7 @@
     }
 
     @media only screen and (max-width: 800px) {
-        input[type=text], input[type=email] {
+        input[type=text], input[type=email], select {
             width: calc(100% - 30px);
         }
 
@@ -284,6 +359,10 @@
 
         .form-box h1 {
             font-size: 7vw;
+        }
+
+        .text-box .red-buttons {
+            transform: scale(0.7);
         }
     }
 </style>
