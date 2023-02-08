@@ -3,7 +3,7 @@
     import { ethers } from "ethers";
     import Canvas from "../lib/Canvas.svelte";
 
-    // Importing compiled files (artifacts and addresses)
+    // Importing compiled files (artifacts and addresses but in this case only one becauce it inherits all the functionality of the rest)
     import KontraktArtifact from "../contracts/Main.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
 
@@ -22,36 +22,40 @@
         surname: undefined,
         email: undefined,
         role: undefined,
-        statusMessage: ""
     }
+
+    // this variable will be used for storing error messages that will be displayed on the client's side
+    export let statusMessage = "";
 
     // Connecting user's wallet
     async function walletConnection(e) {
         e.preventDefault();
         if (window.ethereum === undefined) {
-            console.log("ni mosz metomoska, trzo zoinstolowoć");
+            statusMessage = "Please install an Ethereum provider"
         } else {
             initialState.selectedAddress = await window.ethereum.request({ method: 'eth_requestAccounts' });
             
-            if (initialState._provider.connection) {
+            if (initialState.selectedAddress) {
+                statusMessage = "You're connected!"
                 console.log("connection: ", true);
             } else {
                 console.log("connection: ", false);
+                statusMessage = "You arne't connected!"
             }
         }
     }
 
     // Loading the marketplace if user has connected their wallet
     async function loadMarketplace() {
-        try {
-            if (!initialState._provider.connection) {
-                throw { message: "Please connect your wallet to MetaMask" }
+        initialState._provider.listAccounts().then((result) => {
+            if (result.length) {
+                window.window.location.assign("./content");
+            } else {
+                statusMessage = "Please connect your wallet with metamask";
             }
-
-            window.location.assign("./content");
-        } catch(err) {
-            console.error(err.message);
-        }
+        }).catch((err) => {
+            console.log(err.code, err.message);
+        });
     }
 
     // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
@@ -72,7 +76,7 @@
 
         try {
             if (!address || !name || !surname || !email || !role) {
-                formValidation.statusMessage = "failed";
+                statusMessage = "failed";
                 throw {
                     address: address,
                     name: name,
@@ -83,7 +87,7 @@
                 }
             } else {
                 await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
-                formValidation.statusMessage ="succeed";
+                statusMessage ="succeed";
                 formValidation.address = '';
                 formValidation.name = '';
                 formValidation.surname = '';
@@ -94,9 +98,6 @@
             console.error(err.message, err.address, err.name, err.surname, err.email, err.role);
         } finally {
             _GetAllUsers();
-            if (initialState.accountsArray) {
-                console.log(initialState.accountsArray);
-            }
         }
     }
 
@@ -104,6 +105,7 @@
     async function _GetAllUsers() {
         await initialState._kontrakt.GetAllUsers().then((result) => {
             initialState.accountsArray = result;
+            console.log(initialState.accountsArray);
         }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
         });
@@ -149,7 +151,7 @@
                 <button on:click={_addUser} type="button" class="form-item btn" name="sign-up">Register</button>
             </div>
             <div class="form-item">
-                <p>{formValidation.statusMessage}</p>
+                <p>{statusMessage}</p>
             </div>
 
             <div class="pikabu">
@@ -236,17 +238,16 @@
         display: flex;
         justify-content: space-around;
         align-items: center;
-        flex-flow: row-reverse wrap;
+        flex-flow: row wrap;
     }
 
     .container .form-box {
         width: 700px;
-        height: 750px;
+        height: 730px;
         border-radius: 30px;
         text-align: center;
         background: transparent;
         box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .2);
-        border: solid 1px rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(9.6px);
         -webkit-backdrop-filter: blur(9.6px);
         color: rgb(255, 255, 255);
@@ -257,7 +258,7 @@
     }
 
     .form-box .form-item {
-        margin: 20px 0
+        margin: 15px 0;
     }
 
     .form-box .pikabu {

@@ -44,7 +44,9 @@ async function main() {
   await kontrakt.deployed();
 
   console.log("All contracts depolyed");
-  console.log("Token address: ", token.address)
+  console.log("Token address: ", token.address);
+
+  await kontrakt.addUser('0x10405B8c49823F1f67307BC92589863a20CB8Eb5', 'Ronald', 'Frangulyan', '240355@edu.p.lodz.pl', 2, {gasLimit: 540000});
 
   // We also save the contract's artifacts and address in the frontend directory
   saveFrontendFiles(token, workers, notification, marketplace, kontrakt);

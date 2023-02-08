@@ -32,7 +32,6 @@ contract Main is marketplace , Notifications, AccountTypes {
         require( item_id < Items.length,"Product out of the list");
         require( Items[item_id].status == item_status.SELLING, "Product is not for sale" );
         Token_test(tokenAddress).approve(_buyer, Items[item_id].price );
-
     }
 
 }

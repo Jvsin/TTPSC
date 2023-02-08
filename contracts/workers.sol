@@ -21,7 +21,7 @@ contract AccountTypes {
         string Name; // imie 
         string Surname; // nazwisko 
         string Email; // email 
-        role Rank; 
+        role Rank;
     }
 
     user_t[] public workers;
