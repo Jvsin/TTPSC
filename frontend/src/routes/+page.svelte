@@ -6,11 +6,13 @@
     // Importing compiled files (artifacts and addresses but in this case only one becauce it inherits all the functionality of the rest)
     import KontraktArtifact from "../contracts/Main.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
+    import { init } from 'svelte/internal';
 
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
         accountsArray: undefined,
+        connections: undefined,
         _kontrakt: undefined,
         _provider: undefined
     }
@@ -47,7 +49,8 @@
 
     // Loading the marketplace if user has connected their wallet
     async function loadMarketplace() {
-        initialState._provider.listAccounts().then((result) => {
+        // Resolving a promise which will indicate whether the user is connected or not
+        await initialState._provider.listAccounts().then((result) => {
             if (result.length) {
                 window.window.location.assign("./content");
             } else {
@@ -58,7 +61,7 @@
         });
     }
 
-    // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
+    // Initializing contracts (in this case only one (kontrakt) becauce it inherits all the functionality of the rest)
     async function initializeEthers() {
         initialState._provider = new ethers.providers.Web3Provider(window.ethereum);
 
@@ -75,8 +78,21 @@
         let {address, name, surname, email, role} = formValidation;
 
         try {
+            // Resolving a promise which will indicate whether the user is connected or not
+            await initialState._provider.listAccounts().then((result) => {
+                initialState.connections = result;
+            }).catch((err) => {
+                console.log(err.code, err.message);
+                return;
+            });
+
+            if (!((initialState.connections).length)) {
+                statusMessage = "Please connect your wallet with metamask";
+                return;
+            }
+
             if (!address || !name || !surname || !email || !role) {
-                statusMessage = "failed";
+                statusMessage = "Failed - incomplete form";
                 throw {
                     address: address,
                     name: name,
@@ -85,25 +101,33 @@
                     role: role,
                     message: "Incomplete form"
                 }
-            } else {
-                await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
-                statusMessage ="succeed";
-                formValidation.address = '';
-                formValidation.name = '';
-                formValidation.surname = '';
-                formValidation.email = '';
-                formValidation.role = '';
             }
+
+            // Checking the current user exists in the blockchain
+            initialState.accountsArray = await _getUser(initialState.connections[0]);
+
+            if (initialState.accountsArray['Rank'] < 1 || initialState.accountsArray['Rank'] > 2) {
+                statusMessage = "Failed - no permisiton granted to register";
+                return;
+            }
+
+            await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
+            statusMessage ="Succeed - user registered";
+            formValidation.address = '';
+            formValidation.name = '';
+            formValidation.surname = '';
+            formValidation.email = '';
+            formValidation.role = '';
         } catch(err) {
             console.error(err.message, err.address, err.name, err.surname, err.email, err.role);
         } finally {
-            _GetAllUsers();
+            _getAllUsers();
         }
     }
 
-    // retrieving all registered users if the stack isn't empty it stores the array in initialState
-    async function _GetAllUsers() {
-        await initialState._kontrakt.GetAllUsers().then((result) => {
+    // Retrieving all registered users if the stack isn't empty it stores the array in initialState
+    async function _getAllUsers() {
+        await initialState._kontrakt.getAllUsers().then((result) => {
             initialState.accountsArray = result;
             console.log(initialState.accountsArray);
         }).catch((err) => {
@@ -111,10 +135,20 @@
         });
     }
 
+    // Searches for a user of the givven address and returns it in a resolved promise
+    async function _getUser(address) {
+        return await initialState._kontrakt.getUser(String(address)).then((result) => {
+            return result;
+        }).catch((err) => {
+            statusMessage = "Failed - inner error"
+            console.log("code: ", err.code, "\nmessage: ", err.message);
+        });
+    }
+
     onMount(() => {
         initializeEthers();
         // _addUser('0x10405B8c49823F1f67307BC92589863a20CB8Eb5', 'ronald', 'frangulyan', 'ja@mail.com', 0);
-        // _GetAllUsers();
+        // _getAllUsers();
     })
 </script>
 

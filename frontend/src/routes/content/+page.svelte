@@ -24,8 +24,8 @@
         );
     }
 
-    async function _GetAllUsers() {
-        await initialState._kontrakt.GetAllUsers().then((result) => {
+    async function _getAllUsers() {
+        await initialState._kontrakt.getAllUsers().then((result) => {
             console.log(result)
         }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
@@ -34,7 +34,7 @@
 
     onMount(() => {
         initializeEthers();
-        _GetAllUsers();
+        _getAllUsers();
     })
 
 </script>

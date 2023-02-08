@@ -74,12 +74,23 @@ contract AccountTypes {
         return true;
     }
 
-    function GetAllUsers () external view returns(user_t[] memory) {
+    function getAllUsers () external view returns(user_t[] memory) {
         require ( workers.length > 0 , "Empty stack");
         user_t[] memory temp = new user_t[](workers.length);
         for ( uint256 i = 0 ; i < workers.length; i++) {
             temp[i] = workers[i];
         }
         return temp;
-    } 
+    }
+
+    function getUser(address userAddress) external view returns (user_t memory) {
+        user_t memory user = user_t({ID: 0, user: address(0), Name: "", Surname: "", Email: "", Rank: role.NOT_WORKED});
+        for (uint256 i = 0; i < workers.length; i++) {
+            if (workers[i].user == userAddress) {
+                user = workers[i];
+                break;
+            }
+        }
+        return user;
+    }
 }
