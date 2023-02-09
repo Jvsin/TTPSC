@@ -6,7 +6,6 @@
     // Importing compiled files (artifacts and addresses but in this case only one becauce it inherits all the functionality of the rest)
     import KontraktArtifact from "../contracts/Main.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
-    import { init } from 'svelte/internal';
 
     // This object stores information regarding the blockchain
     export const initialState = {

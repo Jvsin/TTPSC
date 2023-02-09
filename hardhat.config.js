@@ -5,11 +5,8 @@ require("@nomicfoundation/hardhat-toolbox");
 // testing the frontend.
 require("./tasks/faucet");
 
-
-
 //Place for your private account key abcasd
 const KEY = require('./secured.js');
-
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
