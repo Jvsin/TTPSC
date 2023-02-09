@@ -27,18 +27,6 @@ async function main() {
   const token = await Token_test.deploy(Number(10000000));
   await token.deployed();
 
-  const Workers = await ethers.getContractFactory("AccountTypes");
-  const workers = await Workers.deploy();
-  await workers.deployed();
-  
-  const Notification = await ethers.getContractFactory("Notifications");
-  const notification = await Notification.deploy();
-  await notification.deployed();
-
-  const Marketplace = await ethers.getContractFactory("marketplace");
-  const marketplace = await Marketplace.deploy();
-  await marketplace.deployed();
-
   const Kontrakt = await ethers.getContractFactory("Main");
   const kontrakt = await Kontrakt.deploy();
   await kontrakt.deployed();
@@ -49,10 +37,10 @@ async function main() {
   await kontrakt.addUser('0x10405B8c49823F1f67307BC92589863a20CB8Eb5', 'Ronald', 'Frangulyan', '240355@edu.p.lodz.pl', 2, {gasLimit: 540000});
 
   // We also save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(token, workers, notification, marketplace, kontrakt);
+  saveFrontendFiles(token, kontrakt);
 }
 
-function saveFrontendFiles(token, workers, notification, marketplace, kontrakt) {
+function saveFrontendFiles(token, kontrakt) {
   const fs = require("fs");
   const contractsDir = path.join(__dirname, "..", "frontend", "src", "contracts");
 
@@ -65,43 +53,16 @@ function saveFrontendFiles(token, workers, notification, marketplace, kontrakt) 
     JSON.stringify({ Token: token.address }, undefined, 2)
   );
   fs.writeFileSync(
-    path.join(contractsDir, "notification-address.json"),
-    JSON.stringify({ Notification: notification.address }, undefined, 2)
-  );
-  fs.writeFileSync(
-    path.join(contractsDir, "workers-address.json"),
-    JSON.stringify({ Workers: workers.address }, undefined, 2)
-  );
-  fs.writeFileSync(
-    path.join(contractsDir, "marketplace-address.json"),
-    JSON.stringify({ Marketplace: marketplace.address }, undefined, 2)
-  );
-  fs.writeFileSync(
     path.join(contractsDir, "kontrakt-address.json"),
     JSON.stringify({ Kontrakt: kontrakt.address }, undefined, 2)
   );
 
   const Token_testArtifact = artifacts.readArtifactSync("Token_test");
-  const NotificationArtifact = artifacts.readArtifactSync("Notifications");
-  const WorkersArtifact = artifacts.readArtifactSync("AccountTypes");
-  const MarketplaceArtifact = artifacts.readArtifactSync("marketplace");
   const KontraktArtifact = artifacts.readArtifactSync("Main");
 
   fs.writeFileSync(
     path.join(contractsDir, "Token_test.json"),
     JSON.stringify(Token_testArtifact, null, 2)
-  );
-  fs.writeFileSync(
-    path.join(contractsDir, "Notifications.json"),
-    JSON.stringify(NotificationArtifact, null, 2)
-  );
-  fs.writeFileSync(
-    path.join(contractsDir, "AccountTypes.json"),
-    JSON.stringify(WorkersArtifact, null, 2)
-  );
-  fs.writeFileSync(
-    path.join(contractsDir, "marketplace.json"),
-    JSON.stringify(MarketplaceArtifact, null, 2)
   );
   fs.writeFileSync(
     path.join(contractsDir, "Main.json"),
