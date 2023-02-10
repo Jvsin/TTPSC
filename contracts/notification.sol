@@ -19,9 +19,6 @@ contract Notifications {
         statuses Status; // enum do statusow , zmienia sie wraz z odrzuceniem, zatwierdzeniem zgloszenia
         string StatusExplanation; // wyjasnienie czemu zatweirdzamy/ odrzucamy zgloszenie
     }
-
-    address owner; // adres osoby logujacej sie do tokenu 
-
     //address tokenAddress = address(this);
 
     // konstruktor workers 
@@ -30,30 +27,19 @@ contract Notifications {
     //tabla z danymi o ticketach
     Notification[] public Table;
 
-    // konstruktor 
-    constructor ( ) {
-        owner = msg.sender;
-    }
-
-    /*
-    function ContractAddress () external view returns(address) {
-        return tokenAddress;
-    }
-    */
-
     // dodanie ticketu 
-    function NewTicket ( string calldata _Explenation, uint256 _TokenAmount, address _ReciverWallet  ) external {
-        require( pracownicy.findWallet(_ReciverWallet), "Ivalid wallet adress"  );
+    function NewTicket ( string calldata _Explenation, uint256 _TokenAmount, address _ReciverWallet, address _SenderWallet ) external {
         require( _TokenAmount > 0, "To low token amount");
         require( bytes(_Explenation).length != 0 , "Explanation cannot be empty");
         uint256 id = Table.length;
         uint256 today = block.timestamp;
-        Table.push(Notification(id, today ,_Explenation, _TokenAmount, owner, _ReciverWallet, statuses.SEND , "" ));
+        Table.push(Notification(id, today ,_Explenation, _TokenAmount, _SenderWallet, _ReciverWallet, statuses.SEND , "" ));
     }
 
     // odrzucanie ticketa 
     function reject ( uint256 _id , string calldata _Explenation ) external {
         require( _id >= 0, "Negative id");
+        require( Table.length > 0 , "Empty stack");
         require( _id < Table.length, "Index out of range");
         require( bytes(_Explenation).length != 0 , "Explanation cannot be empty");
         require( Table[_id].Status == statuses.SEND, "Ticket is closed");
@@ -62,7 +48,7 @@ contract Notifications {
     }
 
     // wyswietlanie wszystkich ticketow 
-    function GetAll () external view returns(Notification[] memory) {
+    function getAllTickets () external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         Notification[] memory temp = new Notification[](Table.length);
         for ( uint256 i = 0 ; i < Table.length; i++) {
@@ -72,7 +58,7 @@ contract Notifications {
     }
 
     // wyswietlanie wyslanych 
-    function GetSent () external view returns(Notification[] memory) {
+    function getSentTickets () external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         uint256 counter = 0 ;
         for ( uint256 i = 0 ; i < Table.length; i++) {
@@ -93,7 +79,7 @@ contract Notifications {
     }
 
     // wyswietlanie swoich zgloszen 
-    function GetMy ( address _owner ) external view returns(Notification[] memory) {
+    function getMyTickets ( address _owner ) external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         uint256 counter = 0 ;
         for ( uint256 i = 0 ; i < Table.length; i++) {
@@ -112,4 +98,6 @@ contract Notifications {
         }
         return temp;
     }
+
+    
 }

@@ -20,6 +20,7 @@ contract marketplace {
         uint256 id; // nr transakcji 
         address buyer; // nabywca
         uint256 data; // data zakupu 
+        uint256 item_ID;
     }
 
     Notifications tickets;
@@ -41,14 +42,14 @@ contract marketplace {
     }
 
     function ArchiveItem ( uint256 _id ) external {
-        require ( _id >= 0 , "Negative ID");
+        require( Items.length > 0 , "Empty stack");
         require ( _id < Items.length , "Product out of the list"); 
         require ( Items[_id].status != item_status.ARCHIVED, "Item is already archived");
         Items[_id].status = item_status.ARCHIVED;
     } 
 
     function SellItem ( uint256 _id ) external {
-        require ( _id >= 0 , "Negative ID");
+        require( Items.length > 0 , "Empty stack");
         require(_id < Items.length,"Product out of the list");
         require ( Items[_id].status != item_status.SELLING, "Item is already for sale");
         Items[_id].status = item_status.SELLING;
@@ -83,4 +84,22 @@ contract marketplace {
         return temp;
     }
 
+    //dodaj do historii zakupowej
+    function AddToHistory (uint256 _productID, address user) external returns(bool) {
+        require(_productID <= Items.length,"Product does not exist");
+        uint256 count = historia.length;
+        uint256 date = block.timestamp;
+        historia.push(history(count, user, date, _productID));
+        return true;
+    }
+
+    //pobierz historie zakupow
+    function GetAllHistory () external view returns(history[] memory) {
+        require ( historia.length > 0 , "Empty stack");
+        history[] memory temp = new history[](historia.length);
+        for ( uint256 i = 0 ; i < historia.length; i++) {
+            temp[i] = historia[i];
+        }
+        return temp;
+    }
 }

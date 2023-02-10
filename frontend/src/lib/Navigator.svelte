@@ -1,6 +1,6 @@
 <nav>
     <header>
-        <p>rewarDApp</p>
+        <a href="./">rewarDApp</a>
     </header>
 </nav>
 
@@ -8,7 +8,6 @@
     nav {
         width: 100vw;
         height: 110px;
-        color: rgb(255, 255, 255);
         margin: auto;
         display: flex;
         justify-content: center;
@@ -16,6 +15,11 @@
         font-size: 2.5vw;
         font-family: 'Orbitron', sans-serif;
         letter-spacing: 3px;
+    }
+
+    header a {
+        text-decoration: none;
+        color: rgb(255, 255, 255);;
     }
 
     @media only screen and (max-width: 1030px) {

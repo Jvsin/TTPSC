@@ -21,7 +21,7 @@ contract AccountTypes {
         string Name; // imie 
         string Surname; // nazwisko 
         string Email; // email 
-        role Rank;
+        role Rank; 
     }
 
     user_t[] public workers;
@@ -55,7 +55,6 @@ contract AccountTypes {
     //dodawanie nowego usera
     function addUser(address user, string calldata name, string calldata surname, string calldata email, role rank) external {
         require(this.findUser(user,name,surname) == false ,"User is existing");
-        
         user_t memory new_worker;
         new_worker.ID = workers.length;
         new_worker.user = user;
@@ -67,8 +66,8 @@ contract AccountTypes {
     }
 
     // zmiana roli pracownika 
-    function change_role(uint256 _id, role new_role) external returns(bool) {
-        require( _id >= 0 , "ID is negative");
+    function changeRole(uint256 _id, role new_role) external returns(bool) {
+        require( workers.length > 0 , "Empty Stack");
         require(_id < workers.length,"ID out of the scope");
         workers[_id].Rank = new_role;
         return true;
@@ -84,6 +83,7 @@ contract AccountTypes {
     }
 
     function getUser(address userAddress) external view returns (user_t memory) {
+        require ( workers.length > 0 , "Empty stack");
         user_t memory user = user_t({ID: 0, user: address(0), Name: "", Surname: "", Email: "", Rank: role.NOT_WORKED});
         for (uint256 i = 0; i < workers.length; i++) {
             if (workers[i].user == userAddress) {

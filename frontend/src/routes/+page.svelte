@@ -29,8 +29,7 @@
     export let statusMessage = "";
 
     // Connecting user's wallet
-    async function walletConnection(e) {
-        e.preventDefault();
+    async function walletConnection() {
         if (window.ethereum === undefined) {
             statusMessage = "Please install an Ethereum provider"
         } else {
@@ -46,18 +45,24 @@
         }
     }
 
+    // Resolving a promise which will indicate whether the user is connected or not
+    async function getConnections() {
+        return await initialState._provider.listAccounts().then((result) => {
+            return result;
+        }).catch((err) => {
+            console.log("code: ", err.code, "\nmessage: ", err.message);
+        });
+    }
+
     // Loading the marketplace if user has connected their wallet
     async function loadMarketplace() {
-        // Resolving a promise which will indicate whether the user is connected or not
-        await initialState._provider.listAccounts().then((result) => {
-            if (result.length) {
-                window.window.location.assign("./content");
-            } else {
-                statusMessage = "Please connect your wallet with metamask";
-            }
-        }).catch((err) => {
-            console.log(err.code, err.message);
-        });
+        initialState.connections = await getConnections();
+
+        if (initialState.connections.length) {
+            window.window.location.assign("./content");
+        } else {
+            statusMessage = "Please connect your wallet with metamask";
+        }
     }
 
     // Initializing contracts (in this case only one (kontrakt) becauce it inherits all the functionality of the rest)
@@ -72,20 +77,13 @@
     }
 
     // Function that registers users
-    async function _addUser(e) {
-        e.preventDefault();
-        let {address, name, surname, email, role} = formValidation;
-
+    async function _addUser() {
         try {
-            // Resolving a promise which will indicate whether the user is connected or not
-            await initialState._provider.listAccounts().then((result) => {
-                initialState.connections = result;
-            }).catch((err) => {
-                console.log(err.code, err.message);
-                return;
-            });
+            let {address, name, surname, email, role} = formValidation;
+            
+            initialState.connections = await getConnections();
 
-            if (!((initialState.connections).length)) {
+            if (!initialState.connections.length) {
                 statusMessage = "Please connect your wallet with metamask";
                 return;
             }
@@ -127,8 +125,7 @@
     // Retrieving all registered users if the stack isn't empty it stores the array in initialState
     async function _getAllUsers() {
         await initialState._kontrakt.getAllUsers().then((result) => {
-            initialState.accountsArray = result;
-            console.log(initialState.accountsArray);
+            console.log(result);
         }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
         });
@@ -210,22 +207,6 @@
 <Canvas />
 
 <style>
-    input[type=text], input[type=email] {
-        width: 300px;
-        height: 40px;
-        outline: none;
-        border-radius: 10px;
-        background: transparent;
-        border: 1px solid rgb(255, 255, 255);
-        text-align: center;
-        font-size: 16px;
-        font-weight: 500;
-        padding: 2px;
-        letter-spacing: 1.5px;
-        color: rgb(255, 255, 255);
-        margin: 5px 0;
-    }
-
     select {
         -moz-appearance:none;
         -webkit-appearance:none;
@@ -238,6 +219,7 @@
         font-size: 16px;
         font-weight: 500;
         margin: 5px 0;
+        border: 1px solid rgb(255, 255, 255)
     }
 
     button.red-btn {
