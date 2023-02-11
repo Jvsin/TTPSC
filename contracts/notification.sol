@@ -19,6 +19,8 @@ contract Notifications {
         statuses Status; // enum do statusow , zmienia sie wraz z odrzuceniem, zatwierdzeniem zgloszenia
         string StatusExplanation; // wyjasnienie czemu zatweirdzamy/ odrzucamy zgloszenie
     }
+
+
     //address tokenAddress = address(this);
 
     // konstruktor workers 
@@ -26,6 +28,7 @@ contract Notifications {
 
     //tabla z danymi o ticketach
     Notification[] public Table;
+
 
     // dodanie ticketu 
     function NewTicket ( string calldata _Explenation, uint256 _TokenAmount, address _ReciverWallet, address _SenderWallet ) external {
@@ -48,7 +51,7 @@ contract Notifications {
     }
 
     // wyswietlanie wszystkich ticketow 
-    function getAllTickets () external view returns(Notification[] memory) {
+    function GetAll () external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         Notification[] memory temp = new Notification[](Table.length);
         for ( uint256 i = 0 ; i < Table.length; i++) {
@@ -58,7 +61,7 @@ contract Notifications {
     }
 
     // wyswietlanie wyslanych 
-    function getSentTickets () external view returns(Notification[] memory) {
+    function GetSent () external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         uint256 counter = 0 ;
         for ( uint256 i = 0 ; i < Table.length; i++) {
@@ -79,7 +82,7 @@ contract Notifications {
     }
 
     // wyswietlanie swoich zgloszen 
-    function getMyTickets ( address _owner ) external view returns(Notification[] memory) {
+    function GetMy ( address _owner ) external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         uint256 counter = 0 ;
         for ( uint256 i = 0 ; i < Table.length; i++) {
@@ -98,6 +101,4 @@ contract Notifications {
         }
         return temp;
     }
-
-    
 }

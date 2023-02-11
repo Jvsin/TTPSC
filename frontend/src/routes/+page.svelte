@@ -4,7 +4,7 @@
     import Canvas from "../lib/Canvas.svelte";
 
     // Importing compiled files (artifacts and addresses but in this case only one becauce it inherits all the functionality of the rest)
-    import KontraktArtifact from "../contracts/Main.json";
+    import KontraktArtifact from "../contracts/Kontrakt.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
 
     // This object stores information regarding the blockchain

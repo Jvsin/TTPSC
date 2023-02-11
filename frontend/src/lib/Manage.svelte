@@ -1,5 +1,165 @@
 <script>
+    import { onMount, tick } from 'svelte';
+    import { ethers } from "ethers";
 
+    // Importing compiled files (artifacts and addresses)
+    import KontraktArtifact from "../contracts/Kontrakt.json";
+    import kontraktAddress from "../contracts/kontrakt-address.json";
+    import Token_testArtifact from "../contracts/Token_test.json";
+    import tokenAddress from "../contracts/token-address.json";
+
+    // This object stores information regarding the blockchain
+    export const initialState = {
+        selectedAddress: undefined,
+        tickets: undefined,
+        connections: undefined,
+        _kontrakt: undefined,
+        _token: undefined,
+        _provider: undefined
+    }
+
+     // This objects stores form information
+     export const formValidation = {
+        name: undefined,
+        price: undefined,
+        explanation: []
+    }
+
+    // this variable will be used for storing error messages that will be displayed on the client's side
+    export let statusMessage = "";
+
+    // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
+    async function initializeEthers() {
+        initialState._provider = new ethers.providers.Web3Provider(window.ethereum);
+        initialState.selectedAddress = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        initialState._kontrakt = new ethers.Contract(
+            kontraktAddress.Kontrakt,
+            KontraktArtifact.abi,
+            initialState._provider.getSigner(0)
+        );
+
+        initialState._token = new ethers.Contract(
+            tokenAddress.Token,
+            Token_testArtifact.abi,
+            initialState._provider.getSigner(0)
+        );
+
+        // Getting all sent tickets
+        initialState.tickets = await _getSentTickets();
+        console.log(initialState.tickets);
+    }
+
+    // Resolving a promise which will indicate whether the user is connected or not
+    async function getConnections() {
+        return await initialState._provider.listAccounts().then((result) => {
+            return result;
+        }).catch((err) => {
+            console.log("code: ", err.code, "\nmessage: ", err.message);
+        });
+    } 
+
+    // Returns all sent tickets
+    async function _getSentTickets() {
+        return await initialState._kontrakt.GetSent().then((result) => {
+            return result
+        }).catch((err) => {
+            console.log("code: ", err.code, "\n message: ", err.message);
+        });
+    }
+
+    // Adding new items to marketplace
+    async function addNewItem() {
+        try {
+            let {name, price} = formValidation;
+
+            // Checking the connection
+            initialState.connections = await getConnections();
+
+            if (!initialState.connections.length) {
+                statusMessage = "Please connect your wallet with metamask";
+                return;
+            }
+
+            if (!name || price < 0) {
+                statusMessage = "Failed - incomplete form or incorrect input";
+                throw {
+                    name: name,
+                    price: price,
+                    message: "Incomplete form or incorrect input"
+                }
+            }
+
+            await initialState._kontrakt.AddItem(name, Number(price));
+            statusMessage ="Succeed - item added";
+            formValidation.name = '';
+            formValidation.price = '';
+        } catch(err) {
+            console.error(err.message, err.name, err.price)
+        }
+    }
+
+    // Approving ticket
+    async function _approveTicket(id, i) {
+        try {
+            let {explanation} = formValidation;
+
+            // Checking the connection
+            initialState.connections = await getConnections();
+
+            if (!initialState.connections.length) {
+                statusMessage = "Please connect your wallet with metamask";
+                return;
+            }
+
+            if (!explanation[i]) {
+                statusMessage = "Failed - incomplete form";
+                throw {
+                    explanation: explanation,
+                    message: "Incomplete form"
+                }
+            }
+
+            await initialState._kontrakt.approveTicket(Number(id), explanation[i], initialState._token.address);
+            statusMessage ="Succeed - notification resolved";
+            formValidation.explanation[i] = ''
+        } catch(err) {
+            console.error(err.message, err.explanation)
+        }
+    } 
+
+    // Rejecting ticket
+    async function _rejectTicket(id, i) {
+        try {
+            let {explanation} = formValidation;
+
+            // Checking the connection
+            initialState.connections = await getConnections();
+
+            if (!initialState.connections.length) {
+                statusMessage = "Please connect your wallet with metamask";
+                return;
+            }
+
+            if (!explanation[i]) {
+                statusMessage = "Failed - incomplete form";
+                throw {
+                    explanation: explanation,
+                    message: "Incomplete form"
+                }
+            }
+
+            await initialState._kontrakt.reject(Number(id), explanation[i]);
+            statusMessage ="Succeed - notification resolved";
+            formValidation.explanation[i] = ''
+        } catch(err) {
+            console.error(err.message, err.explanation)
+        }
+    }
+
+    onMount(() => {
+        initializeEthers();
+    });
 </script>
 
 <div class="content-manage">
@@ -7,50 +167,55 @@
         <h1>Notifications</h1>
 
         <div class="notifications-box">
-            <div class="notification">
-                <div class="btns">
-                    <button class="btn-approve"></button>
-                    <button class="btn-reject"></button>
-                </div>
-                <div class="text"></div>
-            </div>
-
-            <div class="notification">
-                <div class="btns">
-                    <button class="btn-approve"></button>
-                    <button class="btn-reject"></button>
-                </div>
-                <div class="text"></div>
-            </div>
-            <div class="notification">
-                <div class="btns">
-                    <button class="btn-approve"></button>
-                    <button class="btn-reject"></button>
-                </div>
-                <div class="text"></div>
-            </div>
+            {#if initialState.tickets}
+                {#each initialState.tickets as ticket, i}
+                    <div class="notification">
+                        <div class="btns">
+                            <button on:click={() => {_approveTicket(ticket['id'],  i)}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
+                            <button on:click={() => {_rejectTicket(ticket['id'], i)}} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="text">
+                            <p>Sender: <b>{ticket['SenderWallet']}<b></p>
+                            <p>Reciver: <b>{ticket['ReciverWallet']}</b></p>
+                            <p>explanation: <b>{ticket['Explenation']}</b></p>
+                            
+                            <form action="">
+                                <div class="form-item input-explanation">
+                                    <label for="explanation">Explanation</label><br>
+                                    <textarea  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {/each}
+            {/if}
         </div>
     </div>
 
     <div class="manage-items">
-        <form action="">
-            <h1 class="form-item">Create new item</h1>
-
-            <div class="form-item input-name">
-                <label for="name">Name</label><br>
-                <input required type="text" name="name">
-            </div>
-            <div class="form-item input-price">
-                <label for="price">Price</label><br>
-                <input required type="number" name="price" min="1">
-            </div>
-            <div class="form-item buttons">
-                <button type="button" class="form-item btn" name="send">Add</button>
-            </div>
-            <div class="form-item">
-                <p></p>
-            </div>
-        </form>
+        <div class="form-box">
+            <form action="">
+                <h1 class="form-item">Create new item</h1>
+    
+                <div class="form-item input-name">
+                    <label for="name">Name</label><br>
+                    <input bind:value={formValidation.name} required type="text" name="name">
+                </div>
+                <div class="form-item input-price">
+                    <label for="price">Price</label><br>
+                    <input bind:value={formValidation.price} required type="number" name="price" min="1">
+                </div>
+                <div class="form-item buttons">
+                    <button on:click={addNewItem} type="button" class="form-item btn" name="send">Add</button>
+                </div>
+                <div class="form-item">
+                    <p>{statusMessage}</p>
+                </div>
+                <div class="pikabu">
+                    <p>⚡</p>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -69,39 +234,49 @@
         width: 600px;
         height: auto;
         text-align: center;
-        color: rgb(255, 255, 255);
     }
 
     .manage-notifications h1 {
         margin: 30px 0;
+        color: rgb(255, 255, 255);
     }
 
     .manage-notifications .notifications-box {
         width: 100%;
         height: 650px;
         border-radius: 20px;
-        background: rgb(20, 22, 26);
+        /* background: rgb(20, 22, 26); */
         flex-flow: column;
         overflow-y: scroll;
     }
 
     .manage-notifications .notifications-box::-webkit-scrollbar {
-        width: 3px;
+        width: 5px;
         border-radius: 100px;
     }
 
     .manage-notifications .notifications-box::-webkit-scrollbar-thumb {
-        background-color: rgb(234, 32, 39);
         outline: none;
         border-radius: 50px;
     }
 
     .notifications-box .notification {
         width: 95%;
-        height: 150px;
+        height: auto;
         margin: 20px auto;
+        padding-bottom: 5px;
         border-radius: 20px;
-        background: white;
+        background: rgb(255, 255, 255);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.664), 0 3px 6px rgba(0, 0, 0, 0.589);
+        text-align: center;
+    }
+
+    .notification .text {
+        padding: 0 10px;
+    }
+
+    .notification .text * {
+        margin-bottom: 12px;
     }
 
     .notification .btns {
@@ -110,6 +285,7 @@
         display: flex;
         justify-content: end;
         align-items: center;
+        color: rgb(255, 255, 255);
     }
 
     .btns button {
@@ -122,6 +298,7 @@
         background: rgba(55, 55, 55, 0.5);;
         color: rgb(255, 255, 255);
         transition: 300ms ease-in-out;
+        font-size: 10px;
     }
 
     .btns button:hover {
@@ -129,9 +306,9 @@
     }
      /* Notification content */
 
-    form {
-        width: 500px;
-        height: 100%;
+    .form-box {
+        width: 600px;
+        height: 600px;
         text-align: center;
         border-radius: 20px;
         color: rgb(255, 255, 255);
@@ -139,9 +316,23 @@
         justify-content: center;
         align-items: center;
         flex-flow: column wrap;
+        background: transparent;
+        box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .2);
+        backdrop-filter: blur(9.6px);
+        -webkit-backdrop-filter: blur(9.6px);
+        color: rgb(255, 255, 255);
     }
 
     form .form-item {
         margin: 15px 0;
+    }
+
+    .input-explanation {
+        color: rgb(0, 0, 0);
+    }
+
+    .input-explanation textarea {
+        border-color: rgb(0, 0, 0);
+        color: rgb(0, 0, 0);
     }
 </style>

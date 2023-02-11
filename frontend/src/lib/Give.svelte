@@ -3,14 +3,12 @@
     import { ethers } from "ethers";
 
     // Importing compiled files (artifacts and addresses but in this case only one becauce it inherits all the functionality of the rest)
-    import KontraktArtifact from "../contracts/Main.json";
+    import KontraktArtifact from "../contracts/Kontrakt.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
-    import { init } from 'svelte/internal';
 
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        accountsArray: undefined,
         connections: undefined,
         _kontrakt: undefined,
         _provider: undefined
@@ -78,18 +76,7 @@
             formValidation.explanation = ''
         } catch(err) {
             console.error(err.message, err.address, err.amount, err.explanation);
-        } finally {
-            _getAllTickets();
         }
-    }
-
-    // Getting all the tickets
-    async function _getAllTickets() {
-        await initialState._kontrakt.getAllTickets().then((result) => {
-            console.log(result);
-        }).catch((err) => {
-            console.log("code: ", err.code);
-        });
     }
 
     onMount(() => {
@@ -98,34 +85,39 @@
 </script>
 
 <div class="content-give">
-    <form action="">
-        <h1 class="form-item">Sending Tokens</h1>
-
-        <div class="form-item input-address">
-            <label for="address">Address</label><br>
-            <input bind:value={formValidation.address} required type="text" name="address">
-        </div>
-        <div class="form-item input-amount">
-            <label for="amount">Tokens</label><br>
-            <input bind:value={formValidation.amount} required type="number" name="amount" min="1">
-        </div>
-        <div class="form-item input-explanation">
-            <label for="explanation">Explanation</label><br>
-            <textarea bind:value={formValidation.explanation} required name="explanation"></textarea>
-        </div>
-        <div class="form-item buttons">
-            <button on:click={_newTicket} type="button" class="form-item btn" name="send">Send</button>
-        </div>
-        <div class="form-item">
-            <p>{statusMessage}</p>
-        </div>
-    </form>
+    <div class="form-box">
+        <form action="">
+            <h1 class="form-item">Sending Tokens</h1>
+    
+            <div class="form-item input-address">
+                <label for="address">Address</label><br>
+                <input bind:value={formValidation.address} required type="text" name="address">
+            </div>
+            <div class="form-item input-amount">
+                <label for="amount">Tokens</label><br>
+                <input bind:value={formValidation.amount} required type="number" name="amount" min="1">
+            </div>
+            <div class="form-item input-explanation">
+                <label for="explanation">Explanation</label><br>
+                <textarea bind:value={formValidation.explanation} required name="explanation"></textarea>
+            </div>
+            <div class="form-item buttons">
+                <button on:click={_newTicket} type="button" class="form-item btn" name="send">Send</button>
+            </div>
+            <div class="form-item">
+                <p>{statusMessage}</p>
+            </div>
+            <div class="pikabu">
+                <p>⚡</p>
+            </div>
+        </form>
+    </div>
 </div>
 
 <style>
-     form {
-        width: 100%;
-        height: 100%;
+     .form-box {
+        width: 600px;
+        height: 720px;
         text-align: center;
         border-radius: 20px;
         color: rgb(255, 255, 255);
@@ -133,6 +125,10 @@
         justify-content: center;
         align-items: center;
         flex-flow: column wrap;
+        background: transparent;
+        box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .2);
+        backdrop-filter: blur(9.6px);
+        -webkit-backdrop-filter: blur(9.6px);
     }
 
     form .form-item {

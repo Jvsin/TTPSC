@@ -21,7 +21,7 @@ contract AccountTypes {
         string Name; // imie 
         string Surname; // nazwisko 
         string Email; // email 
-        role Rank; 
+        role Rank;
     }
 
     user_t[] public workers;
@@ -66,7 +66,7 @@ contract AccountTypes {
     }
 
     // zmiana roli pracownika 
-    function changeRole(uint256 _id, role new_role) external returns(bool) {
+    function change_role(uint256 _id, role new_role) external returns(bool) {
         require( workers.length > 0 , "Empty Stack");
         require(_id < workers.length,"ID out of the scope");
         workers[_id].Rank = new_role;

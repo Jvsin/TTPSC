@@ -35,7 +35,7 @@ contract marketplace {
     constructor () {}
 
     function AddItem( string calldata _name , uint256 _price ) external {
-        require(_price > 0, "Price cannot be negative");
+        require(_price >= 0, "Price cannot be negative");
         require( bytes(_name).length != 0 , "Name cannot be empty");
         uint256 _id = Items.length;
         Items.push(items(_id, _name, _price, item_status.SELLING ));

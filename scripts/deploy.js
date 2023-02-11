@@ -23,13 +23,13 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const Token_test = await ethers.getContractFactory("Token_test");
-  const token = await Token_test.deploy(Number(10000000));
-  await token.deployed();
-
-  const Kontrakt = await ethers.getContractFactory("Main");
+  const Kontrakt = await ethers.getContractFactory("Kontrakt");
   const kontrakt = await Kontrakt.deploy();
   await kontrakt.deployed();
+
+  const Token_test = await ethers.getContractFactory("Token_test");
+  const token = await Token_test.deploy(kontrakt.address, Number(10000000));
+  await token.deployed();
 
   console.log("All contracts depolyed");
   console.log("Token address: ", token.address);
@@ -58,14 +58,14 @@ function saveFrontendFiles(token, kontrakt) {
   );
 
   const Token_testArtifact = artifacts.readArtifactSync("Token_test");
-  const KontraktArtifact = artifacts.readArtifactSync("Main");
+  const KontraktArtifact = artifacts.readArtifactSync("Kontrakt");
 
   fs.writeFileSync(
     path.join(contractsDir, "Token_test.json"),
     JSON.stringify(Token_testArtifact, null, 2)
   );
   fs.writeFileSync(
-    path.join(contractsDir, "Main.json"),
+    path.join(contractsDir, "Kontrakt.json"),
     JSON.stringify(KontraktArtifact, null, 2)
   );
 }
