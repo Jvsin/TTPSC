@@ -182,7 +182,7 @@
                             <form action="">
                                 <div class="form-item input-explanation">
                                     <label for="explanation">Explanation</label><br>
-                                    <textarea  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation"></textarea>
+                                    <input  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation">
                                 </div>
                             </form>
                         </div>
@@ -237,7 +237,7 @@
     }
 
     .manage-notifications h1 {
-        margin: 30px 0;
+        margin-bottom: 30px ;
         color: rgb(255, 255, 255);
     }
 
@@ -245,9 +245,10 @@
         width: 100%;
         height: 650px;
         border-radius: 20px;
-        /* background: rgb(20, 22, 26); */
+        background: rgb(20, 22, 26);
         flex-flow: column;
         overflow-y: scroll;
+        color: rgba(55, 55, 55, 0.8);
     }
 
     .manage-notifications .notifications-box::-webkit-scrollbar {
@@ -311,7 +312,6 @@
         height: 600px;
         text-align: center;
         border-radius: 20px;
-        color: rgb(255, 255, 255);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -321,6 +321,8 @@
         backdrop-filter: blur(9.6px);
         -webkit-backdrop-filter: blur(9.6px);
         color: rgb(255, 255, 255);
+        margin-top: 30px;
+        padding: 0 10px;
     }
 
     form .form-item {
@@ -328,11 +330,25 @@
     }
 
     .input-explanation {
-        color: rgb(0, 0, 0);
+        color: rgba(55, 55, 55, 0.8);
     }
 
-    .input-explanation textarea {
-        border-color: rgb(0, 0, 0);
-        color: rgb(0, 0, 0);
+    .input-explanation input {
+        border-color: rgba(55, 55, 55, 0.8);
+        color: rgba(55, 55, 55, 0.8);
+    }
+
+    @media only screen and (max-width: 760px) {
+        .form-box, .content-manage .manage-notifications {
+            width: calc(100vw - 35px);
+        }
+
+        .notifications-box .notification {
+            font-size: 3vw;
+        }
+
+        input {
+            width: calc(100% - 10px);
+        }
     }
 </style>

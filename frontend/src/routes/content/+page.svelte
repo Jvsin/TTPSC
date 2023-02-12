@@ -64,7 +64,7 @@
 
 <style>
     .container {
-        width: 100vw;
+        width: 80vw;
         height: auto;
         margin: auto;
         display: flex;
@@ -88,7 +88,7 @@
     .container .container-content {
         width: 100%;
         height: auto;
-        padding: 20px 0;
+        padding: 10px 0;
         border-radius: 20px;
         margin: 50px 0 0 0;
         /* background: #2f3640; */
@@ -103,5 +103,11 @@
         background-color: rgb(234, 32, 39);
         outline: none;
         border-radius: 50px;
+    }
+
+    @media only screen and (max-width: 760px) {
+        .container {
+            width: 100vw;
+        }
     }
 </style>

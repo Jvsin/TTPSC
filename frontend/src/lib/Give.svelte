@@ -143,4 +143,30 @@
         align-items: center;
         flex-flow: column wrap;
     }
+
+    textarea {
+        width: 300px;
+        height: 200px;
+        resize: none;
+        outline: none;
+        border-radius: 10px;
+        background: transparent;
+        border: 2px solid rgb(255, 255, 255);
+        font-size: 16px;
+        font-weight: 500;
+        padding: 5px;
+        color: rgb(255, 255, 255);
+        margin: 5px 0;
+    }
+
+    @media only screen and (max-width: 650px) {
+        .form-box {
+            width: calc(100vw - 20px);
+            font-size: 3vw;
+        }
+
+        input, textarea {
+            width: calc(100vw - 50px)
+        }
+    }
 </style>
