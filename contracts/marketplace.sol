@@ -85,7 +85,7 @@ contract marketplace {
     }
 
     //dodaj do historii zakupowej
-    function AddToHistory (uint256 _productID, address user) external returns(bool) {
+    function AddToHistory (uint256 _productID, address user) public returns(bool) {
         require(_productID <= Items.length,"Product does not exist");
         uint256 count = historia.length;
         uint256 date = block.timestamp;

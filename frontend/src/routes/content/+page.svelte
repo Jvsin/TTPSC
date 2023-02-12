@@ -10,7 +10,7 @@
     import Buy from '../../lib/Buy.svelte';
     import Manage from '../../lib/Manage.svelte';
     import Give from '../../lib/Give.svelte';
-    import Take from '../../lib/Take.svelte';
+    import Profile from '../../lib/Profile.svelte';
 
     // This object stores information regarding the blockchain
     export const initialState = {
@@ -21,7 +21,7 @@
 
     // This object stores information regarding contents
     export const renderingContent = {
-        componentID: undefined
+        componentID: 4
     }
 
     // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
@@ -47,7 +47,7 @@
         <button on:click={() => renderingContent.componentID = 1} class="menu-buy btn">Buy</button>
         <button on:click={() => renderingContent.componentID = 2} class="menu-manage btn">Manage</button>
         <button on:click={() => renderingContent.componentID = 3} class="menu-give btn">Give</button>
-        <button on:click={() => renderingContent.componentID = 4} class="menu-take btn">Take</button>
+        <button on:click={() => renderingContent.componentID = 4} class="menu-profile btn">Profile</button>
     </div>
     <div class="container-content">
         {#if renderingContent.componentID === 1}
@@ -57,7 +57,7 @@
         {:else if renderingContent.componentID === 3}
             <Give />
         {:else if renderingContent.componentID === 4}
-            <Take />
+            <Profile />
         {/if}
     </div>
 </div>

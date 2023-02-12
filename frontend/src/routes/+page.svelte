@@ -110,14 +110,14 @@
 
             await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
             statusMessage ="Succeed - user registered";
+        } catch(err) {
+            console.error(err.message, err.address, err.name, err.surname, err.email, err.role);
+        } finally {
             formValidation.address = '';
             formValidation.name = '';
             formValidation.surname = '';
             formValidation.email = '';
             formValidation.role = '';
-        } catch(err) {
-            console.error(err.message, err.address, err.name, err.surname, err.email, err.role);
-        } finally {
             _getAllUsers();
         }
     }
@@ -131,20 +131,8 @@
         });
     }
 
-    // Searches for a user of the givven address and returns it in a resolved promise
-    async function _getUser(address) {
-        return await initialState._kontrakt.getUser(String(address)).then((result) => {
-            return result;
-        }).catch((err) => {
-            statusMessage = "Failed - inner error"
-            console.log("code: ", err.code, "\nmessage: ", err.message);
-        });
-    }
-
     onMount(() => {
         initializeEthers();
-        // _addUser('0x10405B8c49823F1f67307BC92589863a20CB8Eb5', 'ronald', 'frangulyan', 'ja@mail.com', 0);
-        // _getAllUsers();
     })
 </script>
 

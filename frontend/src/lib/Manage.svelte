@@ -1,5 +1,5 @@
 <script>
-    import { onMount, tick } from 'svelte';
+    import { onMount} from 'svelte';
     import { ethers } from "ethers";
 
     // Importing compiled files (artifacts and addresses)
@@ -47,7 +47,7 @@
 
         // Getting all sent tickets
         initialState.tickets = await _getSentTickets();
-        console.log(initialState.tickets);
+        console.log("Tickets: ", initialState.tickets);
     }
 
     // Resolving a promise which will indicate whether the user is connected or not
@@ -64,7 +64,7 @@
         return await initialState._kontrakt.GetSent().then((result) => {
             return result
         }).catch((err) => {
-            console.log("code: ", err.code, "\n message: ", err.message);
+            console.error("code: ", err.code);
         });
     }
 
@@ -92,15 +92,25 @@
 
             await initialState._kontrakt.AddItem(name, Number(price));
             statusMessage ="Succeed - item added";
-            formValidation.name = '';
-            formValidation.price = '';
         } catch(err) {
             console.error(err.message, err.name, err.price)
+        } finally {
+            formValidation.name = '';
+            formValidation.price = '';
         }
     }
 
+    // Transfering money
+    async function _transfer(address, amount) {
+        return initialState._token.transfer(String(address), Number(amount)).then((result) => {
+            return result
+        }).catch((err) => {
+            console.error("code: ", err.code, "\nmessage: ", err.message);
+        });
+    }
+
     // Approving ticket
-    async function _approveTicket(id, i) {
+    async function _approveTicket(id, i, address, amount) {
         try {
             let {explanation} = formValidation;
 
@@ -121,10 +131,18 @@
             }
 
             await initialState._kontrakt.approveTicket(Number(id), explanation[i], initialState._token.address);
-            statusMessage ="Succeed - notification resolved";
-            formValidation.explanation[i] = ''
+            const tx = await _transfer(String(address), Number(amount),  {gasLimit: 540000});
+            const result = await tx.wait();
+            
+            if (result.status) {
+                statusMessage ="Succeed - notification resolved"
+            } else {
+                statusMessage ="Failed - transaction error"
+            }
         } catch(err) {
             console.error(err.message, err.explanation)
+        } finally {
+            formValidation.explanation[i] = ''
         }
     } 
 
@@ -151,9 +169,10 @@
 
             await initialState._kontrakt.reject(Number(id), explanation[i]);
             statusMessage ="Succeed - notification resolved";
-            formValidation.explanation[i] = ''
         } catch(err) {
             console.error(err.message, err.explanation)
+        } finally {
+            formValidation.explanation[i] = ''
         }
     }
 
@@ -164,20 +183,19 @@
 
 <div class="content-manage">
     <div class="manage-notifications">
-        <h1>Notifications</h1>
-
         <div class="notifications-box">
             {#if initialState.tickets}
                 {#each initialState.tickets as ticket, i}
                     <div class="notification">
                         <div class="btns">
-                            <button on:click={() => {_approveTicket(ticket['id'],  i)}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
+                            <button on:click={() => {_approveTicket(ticket['id'],  i, ticket['ReciverWallet'], ticket['TokenAmount'])}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
                             <button on:click={() => {_rejectTicket(ticket['id'], i)}} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div class="text">
                             <p>Sender: <b>{ticket['SenderWallet']}<b></p>
                             <p>Reciver: <b>{ticket['ReciverWallet']}</b></p>
-                            <p>explanation: <b>{ticket['Explenation']}</b></p>
+                            <p>Explanation: <b>{ticket['Explenation']}</b></p>
+                            <p>Amount: <b>{ticket['TokenAmount']}</b></p>
                             
                             <form action="">
                                 <div class="form-item input-explanation">
@@ -234,11 +252,6 @@
         width: 600px;
         height: auto;
         text-align: center;
-    }
-
-    .manage-notifications h1 {
-        margin-bottom: 30px ;
-        color: rgb(255, 255, 255);
     }
 
     .manage-notifications .notifications-box {

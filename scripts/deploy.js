@@ -28,7 +28,7 @@ async function main() {
   await kontrakt.deployed();
 
   const Token_test = await ethers.getContractFactory("Token_test");
-  const token = await Token_test.deploy(kontrakt.address, Number(10000000));
+  const token = await Token_test.deploy(kontrakt.address, Number(1));
   await token.deployed();
 
   console.log("All contracts depolyed");

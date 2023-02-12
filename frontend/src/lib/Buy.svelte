@@ -2,16 +2,20 @@
     import { onMount} from 'svelte';
     import { ethers } from "ethers";
 
-    // Importing compiled files (artifacts and addresses but in this case only one becauce it inherits all the functionality of the rest)
+    // Importing compiled files (artifacts and addresses)
     import KontraktArtifact from "../contracts/Kontrakt.json";
     import kontraktAddress from "../contracts/kontrakt-address.json";
+    import Token_testArtifact from "../contracts/Token_test.json";
+    import tokenAddress from "../contracts/token-address.json";
 
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
         items: undefined,
         connections: undefined,
+        balance: undefined,
         _kontrakt: undefined,
+        _token: undefined,
         _provider: undefined
     }
 
@@ -21,7 +25,7 @@
         price: undefined,
     }
 
-    // this variable will be used for storing error messages that will be displayed on the client's side
+    // This variable will be used for storing error messages that will be displayed on the client's side
     export let statusMessage = "";
 
     // Initializing contracts (in this case only one becauce it inherits all the functionality of the rest)
@@ -35,9 +39,15 @@
             initialState._provider.getSigner(0)
         );
 
+        initialState._token = new ethers.Contract(
+            tokenAddress.Token,
+            Token_testArtifact.abi,
+            initialState._provider.getSigner(0)
+        );
+
         // Getting all added items that are for sale
         initialState.items = await _getForSaleItems();
-        console.log(initialState.items);
+        console.log("Items: ", initialState.items);
     }
 
     // Resolving a promise which will indicate whether the user is connected or not
@@ -49,12 +59,60 @@
         });
     };
 
+    // Getting all items that are for sale
     async function _getForSaleItems() {
         return initialState._kontrakt.GetForSaleItems().then((result) => {
             return result;
         }).catch((err) => {
+            console.log("code: ", err.code);
+        });
+    }
+
+    // Getting balance of the current user
+    async function _balanceOf(address) {
+        return await initialState._token.balanceOf(String(address)).then((result) => {
+            return result;
+        }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
         });
+    }
+
+    // Archiving item
+    async function _archiveItem(id) {
+        await initialState._kontrakt.ArchiveItem(Number(id)).then((result) => {
+            console.log(result);
+        }).catch((err) => {
+            console.log(err);
+        });
+    }
+
+    // Buying items
+    async function _buItem(id, address, amount) {
+        try {
+            // Checking the connection
+            initialState.connections = await getConnections();
+
+            if (!initialState.connections.length) {
+                statusMessage = "Please connect your wallet with metamask";
+                return;
+            }
+
+            // Getting the balance
+            initialState.balance = await _balanceOf(initialState.selectedAddress[0]);
+
+            if (!initialState.balance.toNumber()) {
+                throw {
+                    message: "Insufficient balance"
+                }
+            }
+
+            // Naprawic to
+            await initialState._token.approve(String(address), Number(amount), {gasLimit: 540000});
+            await initialState._kontrakt.buyItem(Number(id), String(address), String(initialState._token.address), {gasLimit: 540000})
+            
+        } catch(err) {
+            console.log(err.message);
+        }
     }
 
     onMount(() => {
@@ -62,7 +120,7 @@
     });
 </script>
 
-<div class="content-take">
+<div class="content-buy">
     {#if initialState.items}
         {#each initialState.items as item}
             <div class="item">
@@ -70,7 +128,7 @@
                     <p>{item['name']}</p>
                 </div>
                 <div class="item-interact">
-                    <button class="small-red-btn">Buy</button>
+                    <button on:click={() => {_buItem(item['id'], initialState.selectedAddress[0], item['price'])}} class="small-red-btn">Buy</button>
                     <p>Price: {item['price']}</p>
                 </div>
             </div>
@@ -79,7 +137,7 @@
 </div>
 
 <style>
-    .content-take {
+    .content-buy {
         width: 100%;
         height: 100%;
         display: flex;
@@ -88,7 +146,7 @@
         flex-flow: row wrap;
     }
 
-    .content-take .item {
+    .content-buy .item {
         width: 370px;
         height: 260px;
         background: rgb(255, 255, 255);
@@ -105,7 +163,7 @@
         top: 0;
     }
 
-    .content-take .item:hover {
+    .content-buy .item:hover {
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.664), 0 6px 6px rgba(0, 0, 0, 0.589);
         top: -10px;
     }
