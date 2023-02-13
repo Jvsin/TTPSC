@@ -1,112 +1,415 @@
-/*// This is an example test file. Hardhat will run every *.js file in `test/`,
-// so feel free to add new ones.
-
-// Hardhat tests are normally written with Mocha and Chai.
-
-// We import Chai to use its asserting functions here.
-const { expect } = require("chai");
-
-// We use `loadFixture` to share common setups (or fixtures) between tests.
-// Using this simplifies your tests and makes them run faster, by taking
-// advantage or Hardhat Network's snapshot functionality.
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
+const { expect } = require("chai");
+const { BigNumber } = require("ethers");
+const { ethers } = require("hardhat");
 
-// `describe` is a Mocha function that allows you to organize your tests.
-// Having your tests organized makes debugging them easier. All Mocha
-// functions are available in the global scope.
-//
-// `describe` receives the name of a section of your test suite, and a
-// callback. The callback must define the tests of that section. This callback
-// can't be an async function.
-describe("Token contract", function () {
-  // We define a fixture to reuse the same setup in every test. We use
-  // loadFixture to run this setup once, snapshot that state, and reset Hardhat
-  // Network to that snapshot in every test.
+describe("Main contract" , function()  {
   async function deployTokenFixture() {
-    // Get the ContractFactory and Signers here.
-    const Token = await ethers.getContractFactory("Token");
-    const [owner, addr1, addr2] = await ethers.getSigners();
+    // deploy kontraktu
+    const Kontrakt = await ethers.getContractFactory("Kontrakt");
+    const kontrakt = await Kontrakt.deploy();
+    await kontrakt.deployed();
+    // dodanie pustych kont
+    const [addr1, addr2, owner] = await ethers.getSigners();
+    return { kontrakt, addr1, addr2, owner};
+  }
+  
+  async function deployTokenAndContract() {
+    
+    const Kontrakt = await ethers.getContractFactory("Kontrakt");
+    const kontrakt = await Kontrakt.deploy();
+    await kontrakt.deployed();
 
-    // To deploy our contract, we just have to call Token.deploy() and await
-    // for it to be deployed(), which happens onces its transaction has been
-    // mined.
-    const hardhatToken = await Token.deploy();
+    const Token = await ethers.getContractFactory("Token_test");
+    const token = await Token.deploy(kontrakt.address, Number(1));
+    await token.deployed();
 
-    await hardhatToken.deployed();
-
-    // Fixtures can return anything you consider useful for your tests
-    return { Token, hardhatToken, owner, addr1, addr2 };
+    const [owner ,addr1, addr2 ] = await ethers.getSigners();
+    return { token, kontrakt, owner, addr1, addr2 };
   }
 
-  // You can nest describe calls to create subsections.
-  describe("Deployment", function () {
-    // `it` is another Mocha function. This is the one you use to define your
-    // tests. It receives the test name, and a callback function.
-//
-    // If the callback function is async, Mocha will `await` it.
-    it("Should set the right owner", async function () {
-      // We use loadFixture to setup our environment, and then assert that
-      // things went well
-      const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
-
-      // Expect receives a value and wraps it in an assertion object. These
-      // objects have a lot of utility methods to assert values.
-
-      // This test expects the owner variable stored in the contract to be
-      // equal to our Signer's owner.
-      expect(await hardhatToken.owner()).to.equal(owner.address);
-    });
-
-    it("Should assign the total supply of tokens to the owner", async function () {
-      const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
-      const ownerBalance = await hardhatToken.balanceOf(owner.address);
-      expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
-    });
+  it("Deploy contract and token and check values", async function(){
+    const { token , kontrakt } = await loadFixture(deployTokenAndContract);
+    expect(await token.symbol()).to.equal("$TTPSC");
+    expect(await token.name()).to.equal("TTPSC Money");
+    expect(await token.decimals()).to.equal(Number(18));
+    expect(await token.totalSupply()).to.equal(BigInt(1000000000000000000));
+    expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
   });
 
-  describe("Transactions", function () {
-    it("Should transfer tokens between accounts", async function () {
-      const { hardhatToken, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
-      // Transfer 50 tokens from owner to addr1
-      await expect(hardhatToken.transfer(addr1.address, 50))
-        .to.changeTokenBalances(hardhatToken, [owner, addr1], [-50, 50]);
+  describe("Marketplace" , function() {
 
-      // Transfer 50 tokens from addr1 to addr2
-      // We use .connect(signer) to send a transaction from another account
-      await expect(hardhatToken.connect(addr1).transfer(addr2.address, 50))
-        .to.changeTokenBalances(hardhatToken, [addr1, addr2], [-50, 50]);
+    it("GetAllItems => error => empty stak", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);
+      await expect(kontrakt.GetAllItems()).to.be.rejectedWith("Empty stack");
     });
 
-    it("should emit Transfer events", async function () {
-      const { hardhatToken, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
-
-      // Transfer 50 tokens from owner to addr1
-      await expect(hardhatToken.transfer(addr1.address, 50))
-        .to.emit(hardhatToken, "Transfer").withArgs(owner.address, addr1.address, 50)
-
-      // Transfer 50 tokens from addr1 to addr2
-      // We use .connect(signer) to send a transaction from another account
-      await expect(hardhatToken.connect(addr1).transfer(addr2.address, 50))
-        .to.emit(hardhatToken, "Transfer").withArgs(addr1.address, addr2.address, 50)
+    it("AddItem => error => add item with empty name", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);
+      await expect( kontrakt.AddItem("", Number(10))).to.be.rejectedWith("Name cannot be empty");
     });
 
-    it("Should fail if sender doesn't have enough tokens", async function () {
-      const { hardhatToken, owner, addr1 } = await loadFixture(deployTokenFixture);
-      const initialOwnerBalance = await hardhatToken.balanceOf(
-        owner.address
-      );
-
-      // Try to send 1 token from addr1 (0 tokens) to owner (1000 tokens).
-      // `require` will evaluate false and revert the transaction.
-      await expect(
-        hardhatToken.connect(addr1).transfer(owner.address, 1)
-      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-
-      // Owner balance shouldn't have changed.
-      expect(await hardhatToken.balanceOf(owner.address)).to.equal(
-        initialOwnerBalance
-      );
+    it("AddItem && GetAllItems => add first item to the store", async function() {
+      const { kontrakt } = await loadFixture(deployTokenFixture);  
+      await kontrakt.AddItem("Item 1", Number(1));
+      const items = await kontrakt.GetAllItems();
+      expect(items.length).to.equal(1);
+      expect(items[0].name).to.equal("Item 1");
+      expect(items[0].price).to.equal(1);
+      expect(items[0].status).to.equal(0);
     });
+
+    it("AddItem && GetAllItems => add second item to the store", async function() {
+      const { kontrakt } = await loadFixture(deployTokenFixture);  
+      await kontrakt.AddItem("Item 1", Number(1));
+      await kontrakt.AddItem("Item 2", Number(10));
+      const items = await kontrakt.GetAllItems();
+      expect(items.length).to.equal(2);
+      expect(items[1].name).to.equal("Item 2");
+      expect(items[1].price).to.equal(10);
+      expect(items[1].status).to.equal(0);
+    });
+    
+    it("ArchiveItem => error => Empty stack", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);  
+      await expect(kontrakt.ArchiveItem(Number(0))).to.be.rejectedWith("Empty stack");
+    });
+
+    it("ArchiveItem => error => Product out of the list", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);  
+      await kontrakt.AddItem("Item 1", Number(1));
+      await expect(kontrakt.ArchiveItem(Number(12))).to.be.rejectedWith("Product out of the list");
+    });
+
+    it("ArchiveItem => archive 1 item", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture); 
+      await kontrakt.AddItem("Item 1", Number(1));
+      const items = await kontrakt.GetAllItems();
+      expect(items.length).to.equal(1);
+      expect(items[0].name).to.equal("Item 1");
+      expect(items[0].price).to.equal(1);
+      expect(items[0].status).to.equal(0);
+      await kontrakt.ArchiveItem(Number(0));
+      const items2 = await kontrakt.GetAllItems();
+      expect(items2.length).to.equal(1);
+      expect(items2[0].name).to.equal("Item 1");
+      expect(items2[0].price).to.equal(1);
+      expect(items2[0].status).to.equal(1);
+    });
+
+    it("ArchiveItem => error => Item is already archived", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);  
+      await kontrakt.AddItem("Item 1", Number(1));
+      await kontrakt.ArchiveItem(Number(0));
+      await expect(kontrakt.ArchiveItem(Number(0))).to.be.rejectedWith("Item is already archived");
+    });
+
+    it("SellItem => error => Empty stack", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture); 
+      await expect(kontrakt.SellItem(Number(0))).to.be.rejectedWith("Empty stack");
+    });
+
+    it("SellItem => error => Product out of the list", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture); 
+      await kontrakt.AddItem("Item 1", Number(1));
+      await expect(kontrakt.SellItem(Number(10))).to.be.rejectedWith("Product out of the list");
+    });
+
+    it("SellItem => error => Item is already for sale", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);
+      await kontrakt.AddItem("Item 1", Number(1));
+      await expect(kontrakt.SellItem(Number(0))).to.be.rejectedWith("Item is already for sale");
+    });
+
+    it("SellItem => let for sale 1 item", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture); 
+      await kontrakt.AddItem("Item 1", Number(1));
+      const items = await kontrakt.GetAllItems();
+      expect(items.length).to.equal(1);
+      expect(items[0].name).to.equal("Item 1");
+      expect(items[0].price).to.equal(1);
+      expect(items[0].status).to.equal(0);
+      await kontrakt.ArchiveItem(Number(0));
+      const items2 = await kontrakt.GetAllItems();
+      expect(items2.length).to.equal(1);
+      expect(items2[0].name).to.equal("Item 1");
+      expect(items2[0].price).to.equal(1);
+      expect(items2[0].status).to.equal(1);
+      await kontrakt.SellItem(Number(0));
+      const items3 = await kontrakt.GetAllItems();
+      expect(items3.length).to.equal(1);
+      expect(items3[0].name).to.equal("Item 1");
+      expect(items3[0].price).to.equal(1);
+      expect(items3[0].status).to.equal(0);
+    });
+
+    it("AddToHistory => error => Product does not exist", async function(){
+      const { kontrakt , addr1} = await loadFixture(deployTokenFixture); 
+      await expect(kontrakt.AddToHistory(Number(10), addr1.address)).to.be.rejectedWith("Product does not exist");
+    });
+
+    it("GetAllHistory => error => Empty stack", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture); 
+      await expect(kontrakt.GetAllHistory()).to.be.rejectedWith("Empty stack");
+    });
+
+    it("AddToHistory && GetAllHistory => add and check values", async function(){
+      const { kontrakt , addr1} = await loadFixture(deployTokenFixture); 
+      await kontrakt.AddItem("Item 1", Number(1));
+      await kontrakt.AddToHistory(Number(0), addr1.address);
+      const items = await kontrakt.GetAllHistory();
+      expect(items.length).to.equal(1);
+      expect(items[0].buyer).to.equal(addr1.address);
+      expect(items[0].item_ID).to.equal(0);
+    });
+
   });
+  
+  describe("Tickets", function() {
+
+    it("NewTicket => error => Explanation cannot be empty" ,async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await expect(kontrakt.NewTicket("", 10, addr1.address, addr2.address)).to.be.rejectedWith("Explanation cannot be empty");
+    });
+    
+    it("reject => error => Empty stack", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);
+      await expect(kontrakt.reject(Number(1), "nie zgadzam sie")).to.be.rejectedWith("Empty stack");
+    });
+
+    it("reject => error => Index out of range", async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await expect(kontrakt.reject(Number(10), "nie zgadzam sie")).to.be.rejectedWith("Index out of range");
+    });
+
+    it("reject => error => Explanation cannot be empty", async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await expect(kontrakt.reject(Number(0), "")).to.be.rejectedWith("Explanation cannot be empty");
+    });
+
+    it("reject => error => Explanation cannot be empty", async function(){
+      const { kontrakt ,addr1 ,addr2 } = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await expect(kontrakt.reject(Number(0), "")).to.be.rejectedWith("Explanation cannot be empty");
+    });
+
+    it("archiveTicket => error => Empty stack", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);
+      await expect(kontrakt.archiveTicket(Number(1))).to.be.rejectedWith("Empty stack");
+    });
+
+    it("archiveTicket => error => Index out of range", async function() {
+      const { kontrakt , addr1 ,addr2 } = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await expect(kontrakt.archiveTicket(Number(1))).to.be.rejectedWith("Index out of range");
+    });
+
+    it("archiveTicket => error => Ticket is open", async function() {
+      const { kontrakt , addr1 ,addr2 } = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await expect(kontrakt.archiveTicket(Number(0))).to.be.rejectedWith("Ticket is open");
+    });
+
+    it("archiveTicket => error => Ticket is archived", async function() {
+      const { kontrakt , addr1 ,addr2 } = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await kontrakt.reject(Number(0), "jednak nie");
+      await kontrakt.archiveTicket(Number(0));
+      await expect(kontrakt.archiveTicket(Number(0))).to.be.rejectedWith("Ticket is archived");
+    });
+
+    it("NewTicket && GetAll &&  reject => add 2 tickets and check values", async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 20, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 3", 30, addr1.address, addr2.address);
+      await kontrakt.reject(Number(0), "jednak nie");
+      const AllTickets = await kontrakt.GetAll();
+      expect(AllTickets.length).to.equal(3);
+      expect(AllTickets[0].Explenation).to.equal("byl mily");
+      expect(AllTickets[0].Status).to.equal(Number(2));
+      expect(AllTickets[1].Explenation).to.equal("byl mily 2");
+      expect(AllTickets[1].Status).to.equal(Number(0));
+      expect(AllTickets[2].Explenation).to.equal("byl mily 3");
+      expect(AllTickets[2].Status).to.equal(Number(0));
+    });
+
+    it("NewTicket && GetAll &&  reject && archiveTicket => add 2 tickets and check values", async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 20, addr1.address, addr2.address);
+      await kontrakt.reject(Number(0), "jednak nie");
+      await kontrakt.archiveTicket(Number(0));
+      const AllTickets = await kontrakt.GetAll();
+      expect(AllTickets.length).to.equal(2);
+      expect(AllTickets[0].Status).to.equal(Number(3));
+      expect(AllTickets[1].Status).to.equal(Number(0));
+    });
+
+    it("NewTicket && GetAll && GetMy && reject => add 2 tickets and check values", async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await kontrakt.NewTicket("byl mily", 10, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 20, addr2.address, addr1.address);
+      await kontrakt.NewTicket("byl mily 3", 30, addr1.address, addr2.address);
+      const AllTickets = await kontrakt.GetAll();
+      expect(AllTickets.length).to.equal(3);
+      expect(AllTickets[0].SenderWallet).to.equal(addr2.address);
+      expect(AllTickets[0].ReciverWallet).to.equal(addr1.address);
+      expect(AllTickets[1].SenderWallet).to.equal(addr1.address);
+      expect(AllTickets[1].ReciverWallet).to.equal(addr2.address);
+      expect(AllTickets[2].SenderWallet).to.equal(addr2.address);
+      expect(AllTickets[2].ReciverWallet).to.equal(addr1.address);
+      const SendTickets = await kontrakt.GetMy(addr1.address);
+      expect(SendTickets.length).to.equal(2);
+      expect(SendTickets[0].SenderWallet).to.equal(addr2.address);
+      expect(SendTickets[0].ReciverWallet).to.equal(addr1.address);
+      expect(SendTickets[1].SenderWallet).to.equal(addr2.address);
+      expect(SendTickets[1].ReciverWallet).to.equal(addr1.address);
+    });
+
+    it("approveTicket", async function(){
+      const { token , kontrakt, addr1 , addr2 } = await loadFixture(deployTokenAndContract);
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await kontrakt.NewTicket("byl mily", 10000000, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 200000, addr2.address, addr1.address);
+      await kontrakt.approveTicket(Number(0), "okey", token.address );
+      const AllTickets = await kontrakt.GetAll();
+      expect(AllTickets.length).to.equal(2);
+      expect(AllTickets[0].Explenation).to.equal("byl mily");
+      expect(AllTickets[0].Status).to.equal(Number(1));
+      expect(AllTickets[0].TokenAmount).to.equal(10000000);
+      expect(AllTickets[1].Explenation).to.equal("byl mily 2");
+      expect(AllTickets[1].Status).to.equal(Number(0));
+      expect(AllTickets[1].TokenAmount).to.equal(200000);
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(999999999990000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(10000000));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+    });
+    
+    it("approveTicket => error (after approveTicket) => Ticket is closed", async function(){
+      const { token , kontrakt, addr1 , addr2 } = await loadFixture(deployTokenAndContract);
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await kontrakt.NewTicket("byl mily", 10000000, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 200000, addr2.address, addr1.address);
+      await kontrakt.approveTicket(Number(0), "okey", token.address );
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(999999999990000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(10000000));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await expect(kontrakt.approveTicket(Number(0), "okey", token.address )).to.be.rejectedWith("Ticket is closed");
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(999999999990000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(10000000));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+    });
+
+    it("reject => error (after approveTicket) => Ticket is closed", async function(){
+      const { token , kontrakt, addr1 , addr2 } = await loadFixture(deployTokenAndContract);
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await kontrakt.NewTicket("byl mily", 10000000, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 200000, addr2.address, addr1.address);
+      await kontrakt.approveTicket(Number(0), "okey", token.address );
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(999999999990000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(10000000));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await expect(kontrakt.reject(Number(0), "okey")).to.be.rejectedWith("Ticket is closed");
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(999999999990000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(10000000));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+    });
+
+
+    it("approveTicket && archiveTicket", async function(){
+      const { token , kontrakt, addr1 , addr2 } = await loadFixture(deployTokenAndContract);
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await kontrakt.NewTicket("byl mily", 10000000, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 200000, addr2.address, addr1.address);
+      await kontrakt.approveTicket(Number(0), "okey", token.address );
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(999999999990000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(10000000));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await kontrakt.archiveTicket(Number(0));
+      const AllTickets = await kontrakt.GetAll();
+      expect(AllTickets.length).to.equal(2);
+      expect(AllTickets[0].Status).to.equal(3);
+      expect(AllTickets[1].Status).to.equal(0);
+    });
+
+    it("approveTicket => error (after reject) => Ticket is closed", async function(){
+      const { token , kontrakt, addr1 , addr2 } = await loadFixture(deployTokenAndContract);
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await kontrakt.NewTicket("byl mily", 10000000, addr1.address, addr2.address);
+      await kontrakt.NewTicket("byl mily 2", 200000, addr2.address, addr1.address);
+      await kontrakt.reject(Number(0), "okey");
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+      await expect(kontrakt.approveTicket(Number(0), "okey", token.address )).to.be.rejectedWith("Ticket is closed");
+      expect(await token.balanceOf(kontrakt.address)).to.equal(BigInt(1000000000000000000));
+      expect(await token.balanceOf(addr1.address)).to.equal(BigInt(0));
+      expect(await token.balanceOf(addr2.address)).to.equal(BigInt(0));
+    });
+
+  });
+
+  describe("Workers" , function() {
+
+    it("addUser && getUser => add first user", async function(){
+      const { kontrakt , addr1} = await loadFixture(deployTokenFixture);
+      await kontrakt.addUser(addr1.address, "Jan", "Kowalski", "jkowalski@wp.pl", Number(0) );
+      const items = await kontrakt.getUser(addr1.address);
+      expect(items.user).to.equal(addr1.address);
+      expect(items.Name).to.equal("Jan");
+      expect(items.Surname).to.equal("Kowalski");
+      expect(items.Email).to.equal("jkowalski@wp.pl");
+      expect(items.Rank).to.equal(0);
+    });
+
+    it("addUser && getAllUsers => add 2 users", async function(){
+      const { kontrakt , addr1, addr2} = await loadFixture(deployTokenFixture);
+      await kontrakt.addUser(addr1.address, "Jan", "Kowalski", "jkowalski@wp.pl", Number(0) );
+      await kontrakt.addUser(addr2.address, "Jan", "Nowacki", "jnowacki@wp.pl", Number(1) );
+      const items = await kontrakt.getAllUsers();
+      expect(items.length).to.equal(2);
+      expect(items[0].user).to.equal(addr1.address);
+      expect(items[0].Name).to.equal("Jan");
+      expect(items[0].Surname).to.equal("Kowalski");
+      expect(items[0].Email).to.equal("jkowalski@wp.pl");
+      expect(items[0].Rank).to.equal(0);
+      expect(items[1].user).to.equal(addr2.address);
+      expect(items[1].Name).to.equal("Jan");
+      expect(items[1].Surname).to.equal("Nowacki");
+      expect(items[1].Email).to.equal("jnowacki@wp.pl");
+      expect(items[1].Rank).to.equal(1);
+    });
+
+    it("addUser => error => User is existing", async function(){
+      const { kontrakt , addr1} = await loadFixture(deployTokenFixture);
+      await kontrakt.addUser(addr1.address, "Jan", "Kowalski", "jkowalski@wp.pl", Number(0) );
+      await expect(kontrakt.addUser(addr1.address, "Jan", "Kowalski", "jkowalski@wp.pl", Number(0) )).to.be.rejectedWith("User is existing");
+    });
+
+    it("change_role => error => Empty Stack", async function(){
+      const { kontrakt } = await loadFixture(deployTokenFixture);
+      await expect(kontrakt.change_role(Number(0) , Number(2))).to.be.rejectedWith("Empty Stack");
+    });
+
+    it("change_role => error => ID out of the scope", async function(){
+      const { kontrakt , addr1} = await loadFixture(deployTokenFixture);
+      await kontrakt.addUser(addr1.address, "Jan", "Kowalski", "jkowalski@wp.pl", Number(0) );
+      await expect(kontrakt.change_role(Number(10) , Number(2))).to.be.rejectedWith("ID out of the scope");
+    });
+
+  });
+
 });
-*/

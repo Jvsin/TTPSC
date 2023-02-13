@@ -71,11 +71,12 @@
             await initialState._kontrakt.NewTicket(explanation, Number(amount), address, initialState.selectedAddress[0])
 
             statusMessage ="Succeed - ticket sent";
+        } catch(err) {
+            console.error(err.message, err.address, err.amount, err.explanation);
+        } finally {
             formValidation.address = '';
             formValidation.amount = '';
             formValidation.explanation = ''
-        } catch(err) {
-            console.error(err.message, err.address, err.amount, err.explanation);
         }
     }
 

@@ -11,7 +11,7 @@
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        tickets: [],
+        tickets: undefined,
         connections: undefined,
         _kontrakt: undefined,
         _token: undefined,
@@ -45,13 +45,9 @@
             initialState._provider.getSigner(0)
         );
 
-        // Getting all sent tickets
+        // Getting all tickets
         initialState.tickets = await _getAllTickets();
-        initialState.tickets = initialState.tickets.map((element) => {
-            if (element['Status'] == 0) {
-                return element;
-            }
-        })
+        console.log("Tickets: ", initialState.tickets);
     }
 
     // Resolving a promise which will indicate whether the user is connected or not
@@ -190,25 +186,31 @@
         <div class="notifications-box">
             {#if initialState.tickets}
                 {#each initialState.tickets as ticket, i}
-                    <div class="notification">
-                        <div class="btns">
-                            <button on:click={() => {_approveTicket(ticket['id'],  i, ticket['ReciverWallet'], ticket['TokenAmount'])}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
-                            <button on:click={() => {_rejectTicket(ticket['id'], i)}} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
+                    {#if ticket['Status'] === 0}
+                        <div class="notification">
+                            <div class="btns">
+                                <button on:click={() => {_approveTicket(ticket['id'],  i, ticket['ReciverWallet'], ticket['TokenAmount'])}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
+                                <button on:click={() => {_rejectTicket(ticket['id'], i)}} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="text">
+                                <p>Sender: <b>{ticket['SenderWallet']}<b></p>
+                                <p>Reciver: <b>{ticket['ReciverWallet']}</b></p>
+                                <p>Explanation: <b>{ticket['Explenation']}</b></p>
+                                <p>Amount: <b>{ticket['TokenAmount']}</b></p>
+                                
+                                <form action="">
+                                    <div class="form-item input-explanation">
+                                        <label for="explanation">Explanation</label><br>
+                                        <input  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation">
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                        <div class="text">
-                            <p>Sender: <b>{ticket['SenderWallet']}<b></p>
-                            <p>Reciver: <b>{ticket['ReciverWallet']}</b></p>
-                            <p>Explanation: <b>{ticket['Explenation']}</b></p>
-                            <p>Amount: <b>{ticket['TokenAmount']}</b></p>
-                            
-                            <form action="">
-                                <div class="form-item input-explanation">
-                                    <label for="explanation">Explanation</label><br>
-                                    <input  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation">
-                                </div>
-                            </form>
+                    {:else}
+                        <div class="no-notifications">
+                            <h2>#Empty stack</h2>
                         </div>
-                    </div>
+                    {/if}
                 {/each}
             {/if}
         </div>
@@ -274,6 +276,7 @@
     }
 
     .manage-notifications .notifications-box::-webkit-scrollbar-thumb {
+        background-color: rgb(234, 32, 39);
         outline: none;
         border-radius: 50px;
     }
@@ -289,8 +292,19 @@
         text-align: center;
     }
 
+    .notifications-box .no-notifications {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: rgb(255, 255, 255);
+        letter-spacing: 3px;
+    }
+
     .notification .text {
         padding: 0 10px;
+        overflow-wrap: break-word;
     }
 
     .notification .text * {

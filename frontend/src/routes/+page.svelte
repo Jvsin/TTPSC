@@ -10,7 +10,7 @@
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        accountsArray: undefined,
+        user: undefined,
         connections: undefined,
         _kontrakt: undefined,
         _provider: undefined
@@ -58,11 +58,20 @@
     async function loadMarketplace() {
         initialState.connections = await getConnections();
 
-        if (initialState.connections.length) {
-            window.window.location.assign("./content");
-        } else {
+        if (!initialState.connections.length) {
             statusMessage = "Please connect your wallet with metamask";
+            return;
         }
+
+        // Getting current from the blokchain
+        initialState.user = await _getUser(String(initialState.selectedAddress[0]));
+
+        if (initialState.user['Rank'] === 4) {
+            statusMessage = "You are not registered";
+            return;
+        }
+
+        window.window.location.assign("./content");
     }
 
     // Initializing contracts (in this case only one (kontrakt) becauce it inherits all the functionality of the rest)
@@ -101,9 +110,9 @@
             }
 
             // Checking the current user exists in the blockchain
-            initialState.accountsArray = await _getUser(initialState.connections[0]);
+            initialState.user = await _getUser(initialState.connections[0]);
 
-            if (initialState.accountsArray['Rank'] < 1 || initialState.accountsArray['Rank'] > 2) {
+            if (initialState.user['Rank'] < 1 || initialState.user['Rank'] > 2) {
                 statusMessage = "Failed - no permisiton granted to register";
                 return;
             }
@@ -128,6 +137,14 @@
             console.log(result);
         }).catch((err) => {
             console.log("code: ", err.code, "\nmessage: ", err.message);
+        });
+    }
+
+    async function _getUser(address) {
+        return await initialState._kontrakt.getUser(String(address)).then((result) => {
+            return result
+        }).catch((err) => {
+            console.log("code: ", err.code);
         });
     }
 

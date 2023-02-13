@@ -15,6 +15,7 @@
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
+        user: undefined,
         _kontrakt: undefined,
         _provider: undefined
     }
@@ -34,7 +35,21 @@
             KontraktArtifact.abi,
             initialState._provider.getSigner(0)
         );
+
+        // Getting current user
+        initialState.user = await _getUser(initialState.selectedAddress[0]);
     }
+
+    // Searches for a user of the givven address and returns it in a resolved promise
+    async function _getUser(address) {
+        return await initialState._kontrakt.getUser(String(address)).then((result) => {
+            return result;
+        }).catch((err) => {
+            statusMessage = "Failed - inner error"
+            console.log("code: ", err.code, "\nmessage: ", err.message);
+        });
+    }
+
 
     onMount(() => {
         initializeEthers();
@@ -45,7 +60,9 @@
 <div class="container">
     <div class="container-menu">
         <button on:click={() => renderingContent.componentID = 1} class="menu-buy btn">Buy</button>
-        <button on:click={() => renderingContent.componentID = 2} class="menu-manage btn">Manage</button>
+        {#if initialState.user && initialState.user['Rank']}
+            <button on:click={() => renderingContent.componentID = 2} class="menu-manage btn">Manage</button>
+        {/if}
         <button on:click={() => renderingContent.componentID = 3} class="menu-give btn">Give</button>
         <button on:click={() => renderingContent.componentID = 4} class="menu-profile btn">Profile</button>
     </div>
@@ -88,7 +105,7 @@
     .container .container-content {
         width: 100%;
         height: auto;
-        padding: 10px 0;
+        padding: 5px 0;
         border-radius: 20px;
         margin: 50px 0 0 0;
         /* background: #2f3640; */

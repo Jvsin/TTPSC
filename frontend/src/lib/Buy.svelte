@@ -12,6 +12,7 @@
     export const initialState = {
         selectedAddress: undefined,
         items: undefined,
+        history: undefined,
         connections: undefined,
         balance: undefined,
         _kontrakt: undefined,
@@ -46,7 +47,7 @@
         );
 
         // Getting all added items that are for sale
-        initialState.items = await _getForSaleItems();
+        initialState.items = await _getAllItems();
         console.log("Items: ", initialState.items);
     }
 
@@ -60,8 +61,8 @@
     };
 
     // Getting all items that are for sale
-    async function _getForSaleItems() {
-        return initialState._kontrakt.GetForSaleItems().then((result) => {
+    async function _getAllItems() {
+        return initialState._kontrakt.GetAllItems().then((result) => {
             return result;
         }).catch((err) => {
             console.log("code: ", err.code);
@@ -87,7 +88,7 @@
     }
 
     // Buying items
-    async function _buItem(id, address, amount) {
+    async function _buyItem(id, address, amount) {
         try {
             // Checking the connection
             initialState.connections = await getConnections();
@@ -100,15 +101,15 @@
             // Getting the balance
             initialState.balance = await _balanceOf(initialState.selectedAddress[0]);
 
-            if (!initialState.balance.toNumber()) {
+            if (!initialState.balance.toNumber() || initialState.balance.toNumber() < Number(amount)) {
                 throw {
                     message: "Insufficient balance"
                 }
             }
 
-            // Naprawic to
-            await initialState._token.approve(String(address), Number(amount), {gasLimit: 540000});
-            await initialState._kontrakt.buyItem(Number(id), String(address), String(initialState._token.address), {gasLimit: 540000})
+            // Doing transaction
+            await initialState._token.transfer(initialState._token.address, Number(amount));
+            await initialState._kontrakt.buyItem(Number(id), String(address), {gasLimit: 540000});
             
         } catch(err) {
             console.log(err.message);
@@ -128,7 +129,7 @@
                     <p>{item['name']}</p>
                 </div>
                 <div class="item-interact">
-                    <button on:click={() => {_buItem(item['id'], initialState.selectedAddress[0], item['price'])}} class="small-red-btn">Buy</button>
+                    <button on:click={() => {_buyItem(item['id'], initialState.selectedAddress[0], item['price'])}} class="small-red-btn">Buy</button>
                     <p>Price: {item['price']}</p>
                 </div>
             </div>
