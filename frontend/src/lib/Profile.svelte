@@ -1,5 +1,5 @@
 <script>
-    import { onMount} from 'svelte';
+    import { onMount, tick} from 'svelte';
     import { ethers } from "ethers";
 
     // Importing compiled files (artifacts and addresses)
@@ -13,6 +13,7 @@
         selectedAddress: undefined,
         user: undefined,
         balance: undefined,
+        tickets: undefined,
         _kontrakt: undefined,
         _token: undefined,
         _provider: undefined
@@ -36,10 +37,13 @@
         );
 
         // Getting current user
-        initialState.user = await _getUser(initialState.selectedAddress);
+        initialState.user = await _getUser(initialState.selectedAddress[0]);
         
         // Getting current user's balance
-        initialState.balance = await _balanceOf(initialState.selectedAddress);
+        initialState.balance = await _balanceOf(initialState.selectedAddress[0]);
+
+        // Getting curent user's awards
+        initialState.tickets = await _getMyTickets(initialState.selectedAddress[0]);
     }
 
      // Searches for a user of the givven address and returns it in a resolved promise
@@ -61,6 +65,15 @@
         });
     }
 
+    // Getting awards for the user
+    async function _getMyTickets(address) {
+        return await initialState._kontrakt.GetMy(String(address)).then((result) => {
+            return result
+        }).catch((err) => {
+            console.log("code: ", err.code);
+        });
+    }
+
     onMount(() => {
         initializeEthers();
     })
@@ -79,7 +92,17 @@
     </div>
 
     <div class="profile-awards">
-        <div class="award"></div>
+        {#if initialState.tickets}
+            {#each initialState.tickets as ticket}
+                {#if tick['Status' == 1]}
+                    <div class="award">
+                            <p>From: <b>{ticket['SenderWallet']}<b></p>
+                            <p>Reason: <b>{ticket['Explenation']}</b></p>
+                            <p>Amount: <b>{ticket['TokenAmount']}</b></p>
+                    </div>
+                {/if}
+            {/each}
+        {/if}
     </div>
 </div>
 
@@ -130,10 +153,13 @@
 
     .profile-awards .award {
         width: calc(100% - 20px);
-        height: 200px;
+        height: auto;
         background: rgb(192, 57, 43);
         margin: 10px auto;
         border-radius: 20px;
+        color: rgb(255, 255, 255);
+        padding: 20px 0;
+        text-align: center;
     }
 
 </style>

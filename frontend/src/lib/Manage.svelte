@@ -11,7 +11,7 @@
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        tickets: undefined,
+        tickets: [],
         connections: undefined,
         _kontrakt: undefined,
         _token: undefined,
@@ -46,8 +46,12 @@
         );
 
         // Getting all sent tickets
-        initialState.tickets = await _getSentTickets();
-        console.log("Tickets: ", initialState.tickets);
+        initialState.tickets = await _getAllTickets();
+        initialState.tickets = initialState.tickets.map((element) => {
+            if (element['Status'] == 0) {
+                return element;
+            }
+        })
     }
 
     // Resolving a promise which will indicate whether the user is connected or not
@@ -60,11 +64,11 @@
     } 
 
     // Returns all sent tickets
-    async function _getSentTickets() {
-        return await initialState._kontrakt.GetSent().then((result) => {
+    async function _getAllTickets() {
+        return await initialState._kontrakt.GetAll().then((result) => {
             return result
         }).catch((err) => {
-            console.error("code: ", err.code);
+            console.log("code: ", err.code);
         });
     }
 

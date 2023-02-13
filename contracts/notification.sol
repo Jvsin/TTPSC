@@ -7,8 +7,10 @@ contract Notifications {
     enum statuses {
         SEND, // wyslane
         APPROVED,  // zatwierdzone
-        REJECTED // odrzucone
+        REJECTED, // odrzucone
+        ARCHIVED // zarchiwizowane
     }
+    
     struct Notification {
         uint256 id; // id zgloszenia 
         uint NotificationData; // data utworzenia zgloszenia -> tutaj masz objasnienie daty https://soliditytips.com/articles/solidity-dates-time-operations/
@@ -60,12 +62,12 @@ contract Notifications {
         return temp;
     }
 
-    // wyswietlanie wyslanych 
-    function GetSent () external view returns(Notification[] memory) {
+    // wyswietlanie swoich zgloszen 
+    function GetMy ( address _owner ) external view returns(Notification[] memory) {
         require(Table.length > 0 , "Empty stack");
         uint256 counter = 0 ;
         for ( uint256 i = 0 ; i < Table.length; i++) {
-            if ( Table[i].Status == statuses.SEND) {
+            if ( Table[i].ReciverWallet == _owner ) {
                 counter++;
             }
         }
@@ -73,7 +75,7 @@ contract Notifications {
         Notification[] memory temp = new Notification[](counter);
         counter = 0;
         for ( uint256 i = 0 ; i < Table.length; i++) {
-            if ( Table[i].Status == statuses.SEND) {
+            if ( Table[i].ReciverWallet == _owner ) {
                 temp[counter] = Table[i];
                 counter++;
             }
@@ -81,24 +83,13 @@ contract Notifications {
         return temp;
     }
 
-    // wyswietlanie swoich zgloszen 
-    function GetMy ( address _owner ) external view returns(Notification[] memory) {
-        require(Table.length > 0 , "Empty stack");
-        uint256 counter = 0 ;
-        for ( uint256 i = 0 ; i < Table.length; i++) {
-            if ( Table[i].SenderWallet == _owner ) {
-                counter++;
-            }
-        }
-        require(counter > 0, "No send elements");
-        Notification[] memory temp = new Notification[](counter);
-        counter = 0;
-        for ( uint256 i = 0 ; i < Table.length; i++) {
-            if ( Table[i].SenderWallet == _owner ) {
-                temp[counter] = Table[i];
-                counter++;
-            }
-        }
-        return temp;
+    // zaarchiwizowanie 
+    function archiveTicket ( uint256 _id  ) external {
+        require( _id >= 0, "Negative id");
+        require( Table.length > 0 , "Empty stack");
+        require( _id < Table.length, "Index out of range");
+        require( Table[_id].Status != statuses.SEND ,  "Ticket is open" );
+        require( Table[_id].Status != statuses.ARCHIVED ,  "Ticket is archived" );
+        Table[_id].Status = statuses.ARCHIVED;
     }
 }

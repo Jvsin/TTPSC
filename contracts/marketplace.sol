@@ -41,6 +41,7 @@ contract marketplace {
         Items.push(items(_id, _name, _price, item_status.SELLING ));
     }
 
+    // archiwizacja 
     function ArchiveItem ( uint256 _id ) external {
         require( Items.length > 0 , "Empty stack");
         require ( _id < Items.length , "Product out of the list"); 
@@ -48,6 +49,7 @@ contract marketplace {
         Items[_id].status = item_status.ARCHIVED;
     } 
 
+    // do sprzedania
     function SellItem ( uint256 _id ) external {
         require( Items.length > 0 , "Empty stack");
         require(_id < Items.length,"Product out of the list");
@@ -55,31 +57,12 @@ contract marketplace {
         Items[_id].status = item_status.SELLING;
     }
 
+
     function GetAllItems () external view returns(items[] memory) {
         require ( Items.length > 0 , "Empty stack");
         items[] memory temp = new items[](Items.length);
         for ( uint256 i = 0 ; i < Items.length; i++) {
             temp[i] = Items[i];
-        }
-        return temp;
-    }
-
-    function GetForSaleItems () external view returns(items[] memory) {
-        require ( Items.length > 0 , "Empty stack");
-        uint256 counter = 0;
-        for ( uint256 i = 0 ; i < Items.length; i++) {
-            if ( Items[i].status == item_status.SELLING ) {
-                counter++;
-            } 
-        }
-        require( counter > 0 , "No items for sale" );
-        items[] memory temp = new items[](counter);
-        counter = 0 ;
-        for ( uint256 i = 0 ; i < Items.length; i++) {
-            if ( Items[i].status == item_status.SELLING ) {
-                temp[counter] = Items[i];
-                counter++;
-            } 
         }
         return temp;
     }

@@ -10,9 +10,6 @@ contract Kontrakt is marketplace, Notifications, AccountTypes {
 
     address tokenAddress = address(this);       
 
-    function getBalanceKontrakt() external view returns(uint) {
-        return Token_test(tokenAddress).balanceOf(tokenAddress);
-    }
     // wyjasnienie -> tutaj sa tylko funkcje ktore uzywaja adresu kontraktu
     //akceptacja ticketa 
     // moneyAddres -> adres zdeployowanego Token_test
@@ -25,12 +22,6 @@ contract Kontrakt is marketplace, Notifications, AccountTypes {
         Table[_id].StatusExplanation = _Explenation;
         ERC20 token = ERC20(moneyAddres);
         token.transfer( payable(Table[_id].ReciverWallet), Table[_id].TokenAmount);
-    }
-
-    //testowa funkcja do dopisywania pieniedzy
-    function addMoney ( address moneyAddres, address myAddress) payable external {
-        ERC20 token = ERC20(moneyAddres);
-        token.transfer( payable(myAddress), 10000);
     }
 
     // kupno przedmiotu 
