@@ -88,6 +88,7 @@
         justify-content: center;
         align-items: center;
         flex-flow: column;
+        margin-bottom: 40px;
     }
 
     .container .container-menu {
