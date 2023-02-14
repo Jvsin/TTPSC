@@ -118,6 +118,13 @@
                 return;
             }
 
+            // Checking if the registering user already exists
+            const checkUser = await _getUser(address);
+            if (checkUser['Rank'] !== 4) {
+                statusMessage = "Failed - user already exists";
+                return;
+            }
+
             await initialState._kontrakt.addUser(address, name, surname, email, Number(role), {gasLimit: 540000});
             statusMessage ="Succeed - user registered";
         } catch(err) {
