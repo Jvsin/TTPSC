@@ -209,8 +209,8 @@
             <button class="red-btn" on:click={loadMarketplace}>Marketplace</button>
         </div>
     </div>
+    <Canvas />
 </div>
-<Canvas />
 
 <style>
     select {

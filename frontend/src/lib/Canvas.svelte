@@ -118,10 +118,10 @@
     });
 </script>
 
-<canvas bind:this={canvas}></canvas>
+<canvas class="pokeballs" bind:this={canvas}></canvas>
 
 <style>
-    canvas {
+    .pokeballs {
         position: absolute;
         left: 50%;
         top: 50%;
