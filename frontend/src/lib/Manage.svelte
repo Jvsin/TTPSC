@@ -47,7 +47,7 @@
 
         // Getting all tickets
         initialState.tickets = await _getAllTickets();
-        console.log("Tickets: ", initialState.tickets);
+        // console.log("Tickets: ", initialState.tickets);
     }
 
     // Resolving a promise which will indicate whether the user is connected or not

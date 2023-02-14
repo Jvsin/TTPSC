@@ -44,12 +44,12 @@
 
         // Getting curent user's awards
         initialState.tickets = await _getMyTickets(initialState.selectedAddress[0]);
-        console.log("Awards: ", initialState.tickets)
+        // console.log("Awards: ", initialState.tickets)
 
         // Getting commerce hsitory if user his administrator
         if (initialState.user['Rank'] > 0) {
             initialState.history = await _getAllHistory();
-            console.log("History: ", initialState.history);
+            // console.log("History: ", initialState.history);
         }
     }
 

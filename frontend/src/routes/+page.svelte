@@ -57,6 +57,7 @@
     // Loading the marketplace if user has connected their wallet
     async function loadMarketplace() {
         initialState.connections = await getConnections();
+        console.log(initialState.connections)
 
         if (!initialState.connections.length) {
             statusMessage = "Please connect your wallet with metamask";
@@ -64,7 +65,7 @@
         }
 
         // Getting current from the blokchain
-        initialState.user = await _getUser(String(initialState.selectedAddress[0]));
+        initialState.user = await _getUser(String(initialState.connections[0]));
 
         if (initialState.user['Rank'] === 4) {
             statusMessage = "You are not registered";
