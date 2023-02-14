@@ -1,5 +1,5 @@
 <script>
-    import { onMount} from 'svelte';
+    import { onMount, tick} from 'svelte';
     import { ethers } from "ethers";
 
     // Importing compiled files (artifacts and addresses)
@@ -13,7 +13,8 @@
         selectedAddress: undefined,
         user: undefined,
         balance: undefined,
-        tickets: undefined,
+        tickets: [],
+        history: [],
         _kontrakt: undefined,
         _token: undefined,
         _provider: undefined
@@ -42,14 +43,15 @@
         // Getting current user's balance
         initialState.balance = await _balanceOf(initialState.selectedAddress[0]);
 
-        // Getting curent user's awards
-        initialState.tickets = await _getMyTickets(initialState.selectedAddress[0]);
-        // console.log("Awards: ", initialState.tickets)
+        // Getting all the tickets for the user and sorting them
+        const ticketsResult = await _getMyTickets(initialState.selectedAddress[0]);
+        if (ticketsResult !== "CALL_EXCEPTION") {
+            initialState.tickets = await sortingTickets(ticketsResult);
+        }
 
-        // Getting commerce hsitory if user his administrator
+        // Getting commerce history if user is administrator
         if (initialState.user['Rank'] > 0) {
             initialState.history = await _getAllHistory();
-            // console.log("History: ", initialState.history);
         }
     }
 
@@ -59,7 +61,18 @@
         return date.toLocaleString();
     }
 
-     // Searches for a user of the givven address and returns it in a resolved promise
+    // Sorting tickets
+    async function sortingTickets(array) {
+        const newArray = await array.filter(element => {
+            if (element['Status'] === 1) {
+                return element;
+            }
+        });
+
+        return newArray;
+    }
+
+    // Searches for a user of the givven address and returns it in a resolved promise
      async function _getUser(address) {
         return await initialState._kontrakt.getUser(String(address)).then((result) => {
             return result;
@@ -81,9 +94,10 @@
     // Getting awards for the user
     async function _getMyTickets(address) {
         return await initialState._kontrakt.GetMy(String(address)).then((result) => {
-            return result
+            return result;
         }).catch((err) => {
-            console.log("code: ", err.code);
+            console.log("Awards error code: ", err.code)
+            return err.code;
         });
     }
 
@@ -102,7 +116,8 @@
         return await initialState._kontrakt.GetAllHistory().then((result) => {
             return result;
         }).catch((err) => {
-            console.log("code: ", err.code);
+            console.log("History error code: ", err.code);
+            return err.code;
         });
     }
 
@@ -114,8 +129,9 @@
 <div class="container-profile">
     <div class="profile-items">
         <div class="profile-card">
+            <div class="profile-img"></div>
             {#if initialState.user && initialState.balance}
-                <div class="profile-img"></div>
+
                 <h1>{initialState.user['Name']} {initialState.user['Surname']}</h1>
                 <p>Balance: <b>{initialState.balance.toNumber()}</b></p>
             {/if}
@@ -126,7 +142,12 @@
 
         {#if initialState.user && initialState.user['Rank']}
             <div class="items-history">
-                {#if initialState.history}
+                {#if initialState.history === "CALL_EXCEPTION"}
+                    <div class="no-history">
+                        <h2>#Empty stack</h2>
+                    </div>
+
+                {:else}
                     {#each initialState.history as raport}
                         <div class="history-card">
                             <p>Buyer: <b>{raport['buyer']}<b></p>
@@ -134,38 +155,28 @@
                             <p>Item ID: <b>{raport['item_ID']}</b></p>
                         </div>
                     {/each}
-                {:else}
-                    <div class="no-history">
-                        <h2>#Empty stack</h2>
-                    </div>
                 {/if}
             </div>
         {/if}
     </div>
 
     <div class="profile-awards">
-        {#if initialState.tickets}
-            {#each initialState.tickets as ticket}
-                {#if ticket['Status'] === 1}
-                    <div class="award">
-                        <div class="btns">
-                            <button on:click={() => _archiveTicket(ticket['id'])} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
-                            <p>From: <b>{ticket['SenderWallet']}<b></p>
-                            <p>For: <b>{ticket['Explenation']}</b></p>
-                            <p>Amount: <b>{ticket['TokenAmount']}</b></p>
-                    </div>
-                {:else}
-                    <div class="no-awards">
-                        <h2>#No awards yet 😔</h2>
-                    </div>
-                {/if}
-            {/each}
-        {:else}
+        {#if !initialState.tickets.length}
             <div class="no-awards">
-                <h2>#No awards yet 😔</h2>
+                <h2>#No awards yet 😒</h2>
             </div>
         {/if}
+
+        {#each initialState.tickets as ticket}
+            <div class="award">
+                <div class="btns">
+                    <button on:click={() => _archiveTicket(ticket['id'])} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p>From: <b>{ticket['SenderWallet']}<b></p>
+                <p>For: <b>{ticket['Explenation']}</b></p>
+                <p>Amount: <b>{ticket['TokenAmount']}</b></p>
+            </div>
+        {/each}
     </div>
 </div>
 

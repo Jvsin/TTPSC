@@ -11,7 +11,7 @@
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        tickets: undefined,
+        tickets: [],
         connections: undefined,
         _kontrakt: undefined,
         _token: undefined,
@@ -46,8 +46,19 @@
         );
 
         // Getting all tickets
-        initialState.tickets = await _getAllTickets();
-        // console.log("Tickets: ", initialState.tickets);
+        const ticketsResult = await _getAllTickets();
+        initialState.tickets = await sortingTickets(ticketsResult);
+    }
+
+    // Sorting tickets
+    async function sortingTickets(array) {
+        const newArray = await array.filter(element => {
+            if (element['Status'] === 0) {
+                return element;
+            }
+        });
+
+        return newArray;
     }
 
     // Resolving a promise which will indicate whether the user is connected or not
@@ -184,39 +195,33 @@
 <div class="content-manage">
     <div class="manage-notifications">
         <div class="notifications-box">
-            {#if initialState.tickets}
-                {#each initialState.tickets as ticket, i}
-                    {#if ticket['Status'] === 0}
-                        <div class="notification">
-                            <div class="btns">
-                                <button on:click={() => {_approveTicket(ticket['id'],  i, ticket['ReciverWallet'], ticket['TokenAmount'])}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
-                                <button on:click={() => {_rejectTicket(ticket['id'], i)}} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
-                            </div>
-                            <div class="text">
-                                <p>Sender: <b>{ticket['SenderWallet']}<b></p>
-                                <p>Reciver: <b>{ticket['ReciverWallet']}</b></p>
-                                <p>Explanation: <b>{ticket['Explenation']}</b></p>
-                                <p>Amount: <b>{ticket['TokenAmount']}</b></p>
-                                
-                                <form action="">
-                                    <div class="form-item input-explanation">
-                                        <label for="explanation">Explanation</label><br>
-                                        <input  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation">
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    {:else}
-                        <div class="no-notifications">
-                            <h2>#Empty stack</h2>
-                        </div>
-                    {/if}
-                {/each}
-            {:else}
+            {#if !initialState.tickets.length}
                 <div class="no-notifications">
                     <h2>#Empty stack</h2>
                 </div>
             {/if}
+
+            {#each initialState.tickets as ticket, i}
+                <div class="notification">
+                    <div class="btns">
+                        <button on:click={() => {_approveTicket(ticket['id'],  i, ticket['ReciverWallet'], ticket['TokenAmount'])}} class="btn-approve"><i class="fa-solid fa-check"></i></button>
+                        <button on:click={() => {_rejectTicket(ticket['id'], i)}} class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="text">
+                        <p>Sender: <b>{ticket['SenderWallet']}<b></p>
+                        <p>Reciver: <b>{ticket['ReciverWallet']}</b></p>
+                        <p>Explanation: <b>{ticket['Explenation']}</b></p>
+                        <p>Amount: <b>{ticket['TokenAmount']}</b></p>
+                        
+                        <form action="">
+                            <div class="form-item input-explanation">
+                                <label for="explanation">Explanation</label><br>
+                                <input  bind:value={formValidation.explanation[i]} class="ticket-explain" required name="explanation">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {/each}
         </div>
     </div>
 
