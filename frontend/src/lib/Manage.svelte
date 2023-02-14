@@ -212,6 +212,10 @@
                         </div>
                     {/if}
                 {/each}
+            {:else}
+                <div class="no-notifications">
+                    <h2>#Empty stack</h2>
+                </div>
             {/if}
         </div>
     </div>

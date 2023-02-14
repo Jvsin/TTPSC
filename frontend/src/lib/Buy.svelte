@@ -12,7 +12,7 @@
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
-        items: undefined,
+        items: [],
         merchandiseItems: 0,
         connections: undefined,
         user: undefined,

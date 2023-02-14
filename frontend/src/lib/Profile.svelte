@@ -182,7 +182,7 @@
 
     .container-profile .profile-items {
         width: 600px;
-        height: 820px;
+        height: auto;
         display: flex;
         justify-content: center;
         align-items: baseline;
