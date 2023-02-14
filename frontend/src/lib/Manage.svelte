@@ -47,7 +47,9 @@
 
         // Getting all tickets
         const ticketsResult = await _getAllTickets();
-        initialState.tickets = await sortingTickets(ticketsResult);
+        if (ticketsResult !== "CALL_EXCEPTION") {
+            initialState.tickets = await sortingTickets(ticketsResult);
+        }
     }
 
     // Sorting tickets
@@ -75,7 +77,8 @@
         return await initialState._kontrakt.GetAll().then((result) => {
             return result
         }).catch((err) => {
-            console.log("code: ", err.code);
+            console.log("Ticket error code: ", err.code);
+            return err.code;
         });
     }
 

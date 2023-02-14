@@ -7,13 +7,11 @@
     import kontraktAddress from "../contracts/kontrakt-address.json";
     import Token_testArtifact from "../contracts/Token_test.json";
     import tokenAddress from "../contracts/token-address.json";
-    import { element } from 'svelte/internal';
 
     // This object stores information regarding the blockchain
     export const initialState = {
         selectedAddress: undefined,
         items: [],
-        merchandiseItems: 0,
         connections: undefined,
         user: undefined,
         balance: undefined,
@@ -42,15 +40,29 @@
             initialState._provider.getSigner(0)
         );
 
-        // Getting all added items that are for sale
-        initialState.items = await _getAllItems();
-        for (let i = 0; i < initialState.items.length; i++) {
-            initialState.merchandiseItems += (!Number(element['status']) ? 1 : 0);
-        }
-        // console.log("Items: ", initialState.items);
-
         // Getting current user
         initialState.user = await _getUser(String(initialState.selectedAddress[0]));
+
+        // Getting all added items that are for sale
+        const itemsResult = await _getAllItems();
+        if (itemsResult !== "CALL_EXCEPTION" && !initialState.user['Rank']) {
+            initialState.items = await sortingItemsEmployee(itemsResult);
+        } else {
+            if (itemsResult !== "CALL_EXCEPTION") {
+                initialState.items = itemsResult;
+            }
+        }
+    }
+
+    // Sorting items for employee
+    async function sortingItemsEmployee(array) {
+        const newArray = await array.filter(element => {
+            if (element['status'] === 0) {
+                return element;
+            }
+        });
+
+        return newArray;
     }
 
     // Resolving a promise which will indicate whether the user is connected or not
@@ -67,7 +79,8 @@
         return initialState._kontrakt.GetAllItems().then((result) => {
             return result;
         }).catch((err) => {
-            console.log("code: ", err.code);
+            console.log("Items error code: ", err.code);
+            return err.code
         });
     }
 
@@ -143,48 +156,30 @@
 </script>
 
 <div class="content-buy">
-    {#if initialState.items && initialState.user}
-        {#each initialState.items as item}
-            {#if initialState.user['Rank']}
-                <div class="item">
-                    <div class="item-btns-status">
-                        <div class="item-status">
-                            <p>Status: <b>{statusMessage[item['status']]}</b></p>
-                        </div>
-                        <div class="item-btns">
-                            <button on:click={() => {_archiveItem(item['id'])}} class="btn-archive"><abbr title="Archive"><i class="fa-solid fa-box-archive"></i></abbr></button>
-                            <button on:click={() => {_sellItem(item['id'])}}  class="btn-merchandise"><abbr title="Merchandise"><i class="fa-solid fa-sack-dollar"></i></abbr></button>
-                        </div>
+    {#each initialState.items as item}
+        <div class="item">
+            <div class="item-btns-status">
+                {#if initialState.user['Rank']}
+                    <div class="item-status">
+                        <p>Status: <b>{statusMessage[item['status']]}</b></p>
                     </div>
-                    <div class="item-desc">
-                        <p>{item['name']}</p>
-                    </div>
-                    <div class="item-interact">
-                        <button on:click={() => {_buyItem(item['id'], initialState.selectedAddress[0], item['price'])}} class="small-red-btn">Buy</button>
-                        <p>Price: {item['price']}</p>
-                    </div>
-                </div>
-            {:else}
-                {#if initialState.merchandiseItems === 0}
-                    <div class="no-items">
-                        <h2>#No items 😑</h2>
+                    <div class="item-btns">
+                        <button on:click={() => {_archiveItem(item['id'])}} class="btn-archive"><abbr title="Archive"><i class="fa-solid fa-box-archive"></i></abbr></button>
+                        <button on:click={() => {_sellItem(item['id'])}}  class="btn-merchandise"><abbr title="Merchandise"><i class="fa-solid fa-sack-dollar"></i></abbr></button>
                     </div>
                 {/if}
-                {#if item['status'] === 0}
-                    <div class="item">
-                        <div class="item-btns-status"></div>
-                        <div class="item-desc">
-                            <p>{item['name']}</p>
-                        </div>
-                        <div class="item-interact">
-                            <button on:click={() => {_buyItem(item['id'], initialState.selectedAddress[0], item['price'])}} class="small-red-btn">Buy</button>
-                            <p>Price: {item['price']}</p>
-                        </div>
-                    </div>
-                {/if}
-            {/if}
-        {/each}
-    {:else}
+            </div>
+            <div class="item-desc">
+                <p>{item['name']}</p>
+            </div>
+            <div class="item-interact">
+                <button on:click={() => {_buyItem(item['id'], initialState.selectedAddress[0], item['price'])}} class="small-red-btn">Buy</button>
+                <p>Price: {item['price']}</p>
+            </div>
+        </div>
+    {/each}
+
+    {#if !initialState.items.length}
         <div class="no-items">
             <h2>#No items 😑</h2>
         </div>
