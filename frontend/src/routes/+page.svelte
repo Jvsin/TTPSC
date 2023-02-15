@@ -341,11 +341,6 @@
         input[type=text], input[type=email], select {
             width: calc(100% - 30px);
         }
-
-        .container {
-            height: 100vh;
-            padding: 0;
-        }
     }
 
     @media only screen and (max-width: 400px) {
