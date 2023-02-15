@@ -203,13 +203,11 @@
         </form>
     </div>
     <div class="text-box">
-        <h1>Lorem ipsum</h1>
+        <h1>Hello there</h1>
         <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec tempus at nibh in pellentesque. 
-            Praesent tincidunt nulla vestibulum nunc bibendum eleifend. Nam fringilla, nulla eget imperdiet rhoncus, nulla sapien varius ligula, 
-            a efficitur lacus eros sit amet nisi. Praesent at maximus quam. Suspendisse mollis turpis vitae sagittis consectetur. 
-            Sed vel posuere nibh, sed tincidunt dui. Proin ante dui, bibendum ac elementum sed, convallis non tellus. Mauris eros mauris, 
-            sollicitudin et libero sit amet, lobortis mollis enim.
+            Welcome to the innovative rewards platform, where you can reward and motivate your workers with special tokens, and use those tokens to purchase items. 
+            Our platform is designed to encourage and recognize hard work, and provide a fun and engaging way to boost employee morale. 
+            Thank you for being a part of our community and we look forward to helping you create a culture of appreciation and achievement.
         </p>
         <div class="red-buttons">
             <button class="red-btn" on:click={walletConnection}>Connect Wallet</button>
